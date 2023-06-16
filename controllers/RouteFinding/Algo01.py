@@ -3,11 +3,11 @@ import numpy as np
 from controllers.DistanceAway.distanceaway import haversine
 import itertools
 
-def Route_plan_without_priority(df,startingPoint,startingLatitude,startingLongitude):
+def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitude,startingLongitude):
 
     distance_matrix = []
-    lat_lon_office=df[["latitude","longitude","officeName","AtDeliveryRequirement"]]
-    lat_lon_office.loc[len(lat_lon_office.index)]=[startingLatitude,startingLongitude,startingPoint,0]
+    lat_lon_office=df[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
+    lat_lon_office.loc[len(lat_lon_office.index)]=[startingLatitude,startingLongitude,startingPoint,0,startingPointId]
     lat_lon_office.reset_index(drop=True,inplace=True)
 
 

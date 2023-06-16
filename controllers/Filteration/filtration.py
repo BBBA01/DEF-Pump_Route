@@ -27,4 +27,4 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     total_requirement=sum(df["AtDeliveryRequirement"])
     excess_capacity=Tank_Capacity-total_requirement
 
-    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","AtDeliveryRequirement"]].to_dict(orient="records")
+    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","AtDeliveryRequirement","officeId"]].to_dict(orient="records")

@@ -8,7 +8,7 @@ def Extracting(Product_Type):
     data = response.json()
 
     # convert the JSON data to a Pandas DataFrame
-    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales"])
+    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales","officeId"])
 
     capacity=[]
     currentStock=[]

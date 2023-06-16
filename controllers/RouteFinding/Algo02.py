@@ -3,7 +3,7 @@ import numpy as np
 from controllers.DistanceAway.distanceaway import haversine
 import itertools
 
-def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongitude):
+def Route_plan_with_priority_V1(df,startingPoint,startingPointId,startingLatitude,startingLongitude):
     final_route=[]
     global final_min_distance
     final_min_distance=0.0
@@ -59,7 +59,7 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
 
     lat_lon_office_temp=pd.DataFrame(columns=df.columns)
     lat_lon_office_all=pd.DataFrame(columns=df.columns)
-    lat_lon_office_all=lat_lon_office_all[["latitude","longitude","officeName","AtDeliveryRequirement"]]
+    lat_lon_office_all=lat_lon_office_all[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
 
 
     # Requirement >=90%
@@ -68,8 +68,8 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
             lat_lon_office_temp.loc[i]=list(df.loc[i])
 
     lat_lon_office_temp.reset_index(drop=True,inplace=True)
-    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement"]]
-    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=[startingLatitude,startingLongitude,startingPoint,0]
+    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
+    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=[startingLatitude,startingLongitude,startingPoint,0,startingPointId]
     lat_lon_office_all=pd.concat([lat_lon_office_all,lat_lon_office_temp])
 
     find_route(lat_lon_office_temp)
@@ -83,8 +83,8 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
             lat_lon_office_temp.loc[i]=list(df.loc[i])
 
     lat_lon_office_temp.reset_index(drop=True,inplace=True)
-    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement"]]
-    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0]
+    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
+    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0,startingPointId]
     lat_lon_office_all=pd.concat([lat_lon_office_all,lat_lon_office_temp])
 
     find_route(lat_lon_office_temp)
@@ -98,8 +98,8 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
             lat_lon_office_temp.loc[i]=list(df.loc[i])
 
     lat_lon_office_temp.reset_index(drop=True,inplace=True)
-    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement"]]
-    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0]
+    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
+    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0,startingPointId]
     lat_lon_office_all=pd.concat([lat_lon_office_all,lat_lon_office_temp])
 
     find_route(lat_lon_office_temp)
@@ -113,8 +113,8 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
             lat_lon_office_temp.loc[i]=list(df.loc[i])
 
     lat_lon_office_temp.reset_index(drop=True,inplace=True)
-    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement"]]
-    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0]
+    lat_lon_office_temp=lat_lon_office_temp[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
+    lat_lon_office_temp.loc[len(lat_lon_office_temp.index)]=df[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]].loc[(df["officeName"]==flat_final_route[len(flat_final_route)-1])].values.tolist()[0] if len(flat_final_route)>1 else [startingLatitude,startingLongitude,startingPoint,0,startingPointId]
     lat_lon_office_all=pd.concat([lat_lon_office_all,lat_lon_office_temp])
 
     find_route(lat_lon_office_temp)

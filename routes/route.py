@@ -15,8 +15,8 @@ route_page = Blueprint("simple_page", __name__)
 
 @route_page.route("/api/v1/route_plan", methods=["POST"])
 def create_post():
-    Product_Type = request.json["ProductType"]
-    Starting_Point = request.json["StartingPoint"]
+    Product_TypeId = request.json["ProductTypeId"]
+    Starting_PointId = request.json["StartingPointId"]
     Tank_Capacity = request.json["TankCapacity"]
     minimum_multiple = request.json["MinimumMultiple"]
     No_of_days_for_delivery = request.json["No_of_days_for_delivery"]
@@ -27,15 +27,15 @@ def create_post():
     # convert the JSON data to a Pandas DataFrame
     Starting_Point_df = pd.DataFrame(data)
     Starting_PointName = Starting_Point_df.loc[
-        Starting_Point_df["cityId"] == Starting_Point, "cityName"
+        Starting_Point_df["cityId"] == Starting_PointId, "cityName"
     ].values[0]
     
-    Starting_Point_latitude =Starting_Point_df.loc[Starting_Point_df["cityId"] == Starting_Point, "latitude"].values[0]
+    Starting_Point_latitude =Starting_Point_df.loc[Starting_Point_df["cityId"] == Starting_PointId, "latitude"].values[0]
     
-    Starting_Point_longitude = Starting_Point_df.loc[Starting_Point_df["cityId"] == Starting_Point, "longitude"].values[0]
+    Starting_Point_longitude = Starting_Point_df.loc[Starting_Point_df["cityId"] == Starting_PointId, "longitude"].values[0]
     
 
-    df = Extracting(Product_Type)
+    df = Extracting(Product_TypeId)
     df = DistanceAwayFromStartingPoint(
         df, Starting_Point_latitude, Starting_Point_longitude
     )
@@ -44,13 +44,13 @@ def create_post():
     )
 
     optimal_route1 = Route_plan_without_priority(
-        df, Starting_PointName, Starting_Point_latitude, Starting_Point_longitude
+        df, Starting_PointName,str(Starting_PointId), Starting_Point_latitude, Starting_Point_longitude
     )
     optimal_route2 = Route_plan_with_priority_V1(
-        df, Starting_PointName, Starting_Point_latitude, Starting_Point_longitude
+        df, Starting_PointName,str(Starting_PointId), Starting_Point_latitude, Starting_Point_longitude
     )
     optimal_route3 = Route_plan_with_priority_V2(
-        df, Starting_PointName, Starting_Point_latitude, Starting_Point_longitude
+        df, Starting_PointName,str(Starting_PointId),Starting_Point_latitude, Starting_Point_longitude
     )
 
     return jsonify(
