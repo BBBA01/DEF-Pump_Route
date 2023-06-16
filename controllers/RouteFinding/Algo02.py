@@ -133,8 +133,4 @@ def Route_plan_with_priority_V1(df,startingPoint,startingLatitude,startingLongit
         re_final_route[i]=re_final_route[i].values[0]
         new_df.loc[i]=list(re_final_route[i])
 
-    #change the datatype of latitude and longitude to float in new_df dataframe
-    new_df["latitude"]=new_df["latitude"].astype(float)
-    new_df["longitude"]=new_df["longitude"].astype(float)
-
     return new_df.to_dict(orient="records"),final_min_distance

@@ -21,6 +21,6 @@ def haversine(lat1, lon1, lat2, lon2):
 def DistanceAwayFromStartingPoint(df,lat1,lon1):
     distance=[]
     for i in range(len(df)):
-        distance.append(haversine(lat1, lon1, float(df.loc[i,"latitude"]), float(df.loc[i,"longitude"])))
+        distance.append(haversine(float(lat1), float(lon1), float(df.loc[i,"latitude"]), float(df.loc[i,"longitude"])))
     df = df.assign(distanceAwayFromStartingPoint=distance)
     return df

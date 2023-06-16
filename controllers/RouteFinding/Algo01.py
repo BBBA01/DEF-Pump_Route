@@ -55,9 +55,5 @@ def Route_plan_without_priority(df,startingPoint,startingLatitude,startingLongit
         optimal_route[i]=lat_lon_office.loc[lat_lon_office["officeName"]==optimal_route[i]]
         optimal_route[i]=optimal_route[i].values[0]
         new_df.loc[i]=list(optimal_route[i])
-
-    #change the datatype of latitude and longitude to float in new_df dataframe
-    new_df["latitude"]=new_df["latitude"].astype(float)
-    new_df["longitude"]=new_df["longitude"].astype(float)
        
     return new_df.to_dict(orient='records') ,min_distance

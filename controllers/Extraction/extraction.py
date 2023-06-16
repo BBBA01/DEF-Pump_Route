@@ -8,7 +8,7 @@ def Extracting(Product_Type):
     data = response.json()
 
     # convert the JSON data to a Pandas DataFrame
-    df = pd.DataFrame(data,columns=['productTypeName','officeName',"latitude","longitude","avgSales"])
+    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales"])
 
     capacity=[]
     currentStock=[]
@@ -27,7 +27,7 @@ def Extracting(Product_Type):
     df = df.assign(currentStock=currentStock,totalCapacity=capacity)
     df["requirement%"]=(abs(df["totalCapacity"]-df["currentStock"])/df["totalCapacity"])*100
 
-    df=df[df["productTypeName"]==Product_Type]
+    df=df[df["productTypeId"]==Product_Type]
     df.reset_index(inplace=True,drop=True)
     for i in range(len(df)):
         df.loc[i,"requirement%"]=100 if df.loc[i,"requirement%"]>100 else df.loc[i,"requirement%"]
