@@ -10,19 +10,26 @@ def Extracting(Product_Type):
     # convert the JSON data to a Pandas DataFrame
     df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales","officeId"])
 
-    capacity=[]
-    currentStock=[]
+    godown_df = pd.DataFrame(data)
 
-    for x in data:
-        total_capacity=0
-        total_current_stock=0 
-    
-        for y in x["godownProducts"]:
-            total_capacity=total_capacity+y["capacity"]
-            y["currentStock"]=y["currentStock"] if y["currentStock"] else 0
-            total_current_stock=total_current_stock+y["currentStock"]
-        currentStock.append(total_current_stock)
-        capacity.append(total_capacity)
+    # Define a function that takes a row of the dataframe as input and returns a tuple of total_capacity and total_current_stock
+    def calculate_total_capacity_and_stock(row):
+
+        if len(row["godownProducts"]):
+            total_capacity = sum(list(pd.DataFrame(row["godownProducts"])["capacity"]))
+            total_current_stock = sum(list(pd.DataFrame(row["godownProducts"])["currentStock"]))
+        else:
+            total_capacity=0
+            total_current_stock=0
+
+        return total_capacity, total_current_stock
+
+    # Use apply() method to apply the function on each row of the dataframe and store the results in new columns
+    godown_df[["totalCapacity", "totalCurrentStock"]] = godown_df.apply(calculate_total_capacity_and_stock, axis=1, result_type="expand")
+
+    # Extract the columns into separate lists
+    currentStock = godown_df["totalCurrentStock"].tolist()
+    capacity = godown_df["totalCapacity"].tolist()
     
     df = df.assign(currentStock=currentStock,totalCapacity=capacity)
     df["requirement%"]=(abs(df["totalCapacity"]-df["currentStock"])/df["totalCapacity"])*100

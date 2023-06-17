@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 from controllers.DistanceAway.distanceaway import haversine
-import itertools
+
 
 def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitude,startingLongitude):
 
@@ -19,32 +18,17 @@ def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitud
 
 
     stops=list(lat_lon_office["officeName"][::-1])
-    # Define the distance matrix
-    distance_matrix = np.array(distance_matrix)
 
-    # Define a function to calculate the total distance of a route
-    def get_total_distance(route):
-        total_distance = 0
-        for i in range(len(route)-1):
-            total_distance += distance_matrix[route[i], route[i+1]]
-        return total_distance
-
-    # Generate all possible permutations of stops except for the starting point
-    permutations = itertools.permutations(range(1, len(stops)))
-
-    # Calculate the total distance of each permutation and select the one with the minimum distance
-    min_distance = float('inf')
-    optimal_route = None
-    for perm in permutations:
-        # Add the starting point to the beginning of the permutation
-        route_indices = [0] + list(perm)
-        route = [stops[i] for i in route_indices]
-        # Calculate the total distance of the route
-        total_distance = get_total_distance(route_indices)
-        # Update the minimum distance and optimal route if necessary
-        if total_distance < min_distance:
-            min_distance = total_distance
-            optimal_route = route
+    distance_matrix_df=pd.DataFrame(data=distance_matrix,index=stops,columns=stops)
+    start=startingPoint
+    distance_matrix_df.drop(columns=start,inplace=True)
+    optimal_route=[start]
+    min_distance=0
+    for i in range(len(distance_matrix_df)-1):
+        optimal_route.append(distance_matrix_df.loc[start].idxmin())
+        min_distance+=distance_matrix_df.loc[start].min()
+        start=distance_matrix_df.loc[start].idxmin()
+        distance_matrix_df.drop(columns=start,inplace=True)
 
     min_distance+=df.loc[df["officeName"]==optimal_route[-1]]["distanceAwayFromStartingPoint"].values[0]
     optimal_route.append(startingPoint)

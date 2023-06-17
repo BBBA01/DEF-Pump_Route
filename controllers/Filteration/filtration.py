@@ -16,7 +16,7 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     Update_df=pd.DataFrame(columns=df.columns)
     total_requirement=0
     for i in range(len(df)):
-        if Tank_Capacity>total_requirement+df.loc[i,"AtDeliveryRequirement"]:
+        if Tank_Capacity>=total_requirement+df.loc[i,"AtDeliveryRequirement"]:
             total_requirement=total_requirement+df.loc[i,"AtDeliveryRequirement"]
             Update_df.loc[i]=df.loc[i]
 

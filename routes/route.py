@@ -46,12 +46,12 @@ def create_post():
     optimal_route1 = Route_plan_without_priority(
         df, Starting_PointName,str(Starting_PointId), Starting_Point_latitude, Starting_Point_longitude
     )
-    optimal_route2 = Route_plan_with_priority_V1(
-        df, Starting_PointName,str(Starting_PointId), Starting_Point_latitude, Starting_Point_longitude
-    )
-    optimal_route3 = Route_plan_with_priority_V2(
-        df, Starting_PointName,str(Starting_PointId),Starting_Point_latitude, Starting_Point_longitude
-    )
+    # optimal_route2 = Route_plan_with_priority_V1(
+    #     df, Starting_PointName,str(Starting_PointId), Starting_Point_latitude, Starting_Point_longitude
+    # )
+    # optimal_route3 = Route_plan_with_priority_V2(
+    #     df, Starting_PointName,str(Starting_PointId),Starting_Point_latitude, Starting_Point_longitude
+    # )
 
     return jsonify(
         Total_requirement=total_requirement,
@@ -63,15 +63,15 @@ def create_post():
                 "Route": optimal_route1[0],
                 "Total_distance": optimal_route1[1],
             },
-            "Algorithm_2": {
-                "Description": "Routing based on Requirement Priority V1",
-                "Route": optimal_route2[0],
-                "Total_distance": optimal_route2[1],
-            },
-            "Algorithm_3": {
-                "Description": "Routing based on Requirement Priority V2",
-                "Route": optimal_route3[0],
-                "Total_distance": optimal_route3[1],
-            },
+            # "Algorithm_2": {
+            #     "Description": "Routing based on Requirement Priority V1",
+            #     "Route": optimal_route2[0],
+            #     "Total_distance": optimal_route2[1],
+            # },
+            # "Algorithm_3": {
+            #     "Description": "Routing based on Requirement Priority V2",
+            #     "Route": optimal_route3[0],
+            #     "Total_distance": optimal_route3[1],
+            # },
         },
     )
