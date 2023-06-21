@@ -5,8 +5,8 @@ from controllers.DistanceAway.distanceaway import haversine
 def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitude,startingLongitude):
 
     distance_matrix = []
-    lat_lon_office=df[["latitude","longitude","officeName","AtDeliveryRequirement","officeId"]]
-    lat_lon_office.loc[len(lat_lon_office.index)]=[startingLatitude,startingLongitude,startingPoint,0,startingPointId]
+    lat_lon_office=df[["latitude","longitude","officeName","atDeliveryRequirement","officeId","totalCapacity","currentStock"]]
+    lat_lon_office.loc[len(lat_lon_office.index)]=[startingLatitude,startingLongitude,startingPoint,0,startingPointId,0,0]
     lat_lon_office.reset_index(drop=True,inplace=True)
 
 
