@@ -39,6 +39,7 @@ def Extracting(Product_Type):
     for i in range(len(df)):
         df.loc[i,"requirement%"]=100 if df.loc[i,"requirement%"]>100 else df.loc[i,"requirement%"]
 
+    df["requirement%"].fillna(0,inplace=True)
     df.dropna(inplace=True)
     df.reset_index(inplace=True,drop=True)
     df.sort_values(by="requirement%",inplace=True,ascending=False)
