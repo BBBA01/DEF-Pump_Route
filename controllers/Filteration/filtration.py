@@ -7,10 +7,11 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
         df.loc[i,"atDeliveryRequirement"]=df.loc[i,"totalCapacity"] if df.loc[i,"atDeliveryRequirement"]>df.loc[i,"totalCapacity"] else df.loc[i,"atDeliveryRequirement"]
     df["requirement%"]=df["atDeliveryRequirement"]/df["totalCapacity"]*100
     df["requirement%"].fillna(0,inplace=True)
+    df["atDeliveryRequirement"]= (df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
+    
     rest_df=df.loc[df["atDeliveryRequirement"] < minimum_multiple]
     df=df.loc[df["atDeliveryRequirement"] >= minimum_multiple]
                                      
-    df["atDeliveryRequirement"]= (df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
     
     df.sort_values(by="requirement%",inplace=True,ascending=False)
     df.reset_index(drop=True,inplace=True)
