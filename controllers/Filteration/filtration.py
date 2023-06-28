@@ -8,7 +8,9 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     df["requirement%"]=df["atDeliveryRequirement"]/df["totalCapacity"]*100
     df["requirement%"].fillna(0,inplace=True)
     df["atDeliveryRequirement"]= (df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
-    
+    df["currentStock"]=df["currentStock"]-df["avgSales"]*No_of_days_for_delivery
+    df["availableQuantity"]=df["totalCapacity"]-df["currentStock"]
+
     rest_df=df.loc[df["atDeliveryRequirement"] < minimum_multiple]
     df=df.loc[df["atDeliveryRequirement"] >= minimum_multiple]
                                      
@@ -33,4 +35,4 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     total_requirement=sum(df["atDeliveryRequirement"])
     excess_capacity=Tank_Capacity-total_requirement
 
-    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock"]].to_dict(orient="records")
+    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]].to_dict(orient="records")
