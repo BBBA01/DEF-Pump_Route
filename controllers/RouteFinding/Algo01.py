@@ -3,7 +3,7 @@ import pandas as pd
 from controllers.DistanceAway.distanceaway import haversine
 
 # Replace 'YOUR_API_KEY' with your actual Google Maps API key
-# API_KEY = 'AIzaSyDN32TA762x19KhBZX91X4uNcmdGAhAlrQ'
+# API_KEY = 'YOUR_API_KEY'
 
 # Initialize the Google Maps client
 # gmaps = googlemaps.Client(key=API_KEY)
@@ -50,7 +50,7 @@ def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitud
     # distance_matrix_df = pd.DataFrame(distance_matrix, columns=lat_lon_office['officeName'], index=lat_lon_office['officeName'])
     distance_matrix_df2 = pd.DataFrame(distance_matrix, columns=lat_lon_office['officeName'], index=lat_lon_office['officeName'])
     optimal_route=[]
-    min_distance=-1
+    min_distance=0
 
     for x in range(len(distance_matrix_df2)-1):
         distance_matrix_df=distance_matrix_df2.copy()
@@ -69,7 +69,7 @@ def Route_plan_without_priority(df,startingPoint,startingPointId,startingLatitud
         temp_distance+=distance_matrix_df2.loc[startingPoint,temp_route[-1]]
         temp_route.append(startingPoint)
 
-        if min_distance>temp_distance or min_distance==-1:
+        if min_distance>temp_distance or min_distance==0:
             min_distance=temp_distance
             optimal_route=temp_route
 

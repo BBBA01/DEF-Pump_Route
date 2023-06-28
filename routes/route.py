@@ -2,6 +2,7 @@ from flask import jsonify, request
 import requests
 import pandas as pd
 from controllers.Extraction.extraction import Extracting, ExtractingFromOfficeId
+from controllers.Extraction.extraExtraction import ExtractingFromDeliveryPlan
 from controllers.DistanceAway.distanceaway import DistanceAwayFromStartingPoint
 from controllers.Filteration.filtration import Filtering
 from controllers.RouteFinding.Algo01 import Route_plan_without_priority
@@ -91,6 +92,7 @@ def find_route():
     Tank_Capacity = request.json["TankCapacity"]
     minimum_multiple = request.json["MinimumMultiple"]
     No_of_days_for_delivery = request.json["No_of_days_for_delivery"]
+    DeliveryPlanId = request.json["DeliveryPlanId"]
     Office_list = request.json["OfficeIdList"]
 
     response = requests.get(ManufacturingHuburl)
@@ -110,7 +112,10 @@ def find_route():
         Starting_Point_df["cityId"] == Starting_PointId, "longitude"
     ].values[0]
 
-    df = ExtractingFromOfficeId(Product_TypeId, Office_list)
+    if (len(DeliveryPlanId)>0):
+        df=ExtractingFromDeliveryPlan(Product_TypeId,DeliveryPlanId)
+    else:
+        df = ExtractingFromOfficeId(Product_TypeId, Office_list)
     df = DistanceAwayFromStartingPoint(
         df, Starting_Point_latitude, Starting_Point_longitude
     )
