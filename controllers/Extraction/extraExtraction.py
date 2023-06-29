@@ -33,6 +33,8 @@ def ExtractingFromDeliveryPlan(Product_Type,DeliveryPlanId):
     capacity = godown_df["totalCapacity"].tolist()
     
     df = df.assign(currentStock=currentStock,totalCapacity=capacity)
+    # if totalCapacity value is 0 then replace it to 2000
+    df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
 
     for i in DeliveryPlanId:
         response2=requests.get(f"{DeliveryPlanurl}/{i}")

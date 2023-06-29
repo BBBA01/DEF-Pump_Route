@@ -32,6 +32,9 @@ def Extracting(Product_Type):
     capacity = godown_df["totalCapacity"].tolist()
     
     df = df.assign(currentStock=currentStock,totalCapacity=capacity)
+    # if totalCapacity value is 0 then replace it to 2000
+    df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
+    
     df["requirement%"]=(abs(df["totalCapacity"]-df["currentStock"])/df["totalCapacity"])*100
 
     df=df[df["productTypeId"]==Product_Type]
@@ -78,6 +81,9 @@ def ExtractingFromOfficeId(Product_Type,OfficeList):
     capacity = godown_df["totalCapacity"].tolist()
     
     df = df.assign(currentStock=currentStock,totalCapacity=capacity)
+    # if totalCapacity value is 0 then replace it to 2000
+    df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
+
      # Select the rows where officeId is in the OfficeList
     df=df[df["officeId"].isin(OfficeList)]
     df.reset_index(inplace=True,drop=True)
