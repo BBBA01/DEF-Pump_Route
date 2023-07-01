@@ -2,37 +2,10 @@ import requests
 import pandas as pd
 from config.config import url
 
-def Extracting(Product_Type):
+def Extracting(df,Product_Type):
 
-    response = requests.get(url)
-    data = response.json()
-
-    # convert the JSON data to a Pandas DataFrame
-    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales","officeId"])
-
-    godown_df = pd.DataFrame(data)
-
-    # Define a function that takes a row of the dataframe as input and returns a tuple of total_capacity and total_current_stock
-    def calculate_total_capacity_and_stock(row):
-
-        if len(row["godownProducts"]):
-            total_capacity = sum(list(pd.DataFrame(row["godownProducts"])["capacity"]))
-            total_current_stock = sum(list(pd.DataFrame(row["godownProducts"])["currentStock"]))
-        else:
-            total_capacity=0
-            total_current_stock=0
-
-        return total_capacity, total_current_stock
-
-    # Use apply() method to apply the function on each row of the dataframe and store the results in new columns
-    godown_df[["totalCapacity", "totalCurrentStock"]] = godown_df.apply(calculate_total_capacity_and_stock, axis=1, result_type="expand")
-
-    # Extract the columns into separate lists
-    currentStock = godown_df["totalCurrentStock"].tolist()
-    capacity = godown_df["totalCapacity"].tolist()
-    
-    df = df.assign(currentStock=currentStock,totalCapacity=capacity)
     # if totalCapacity value is 0 then replace it to 2000
+    df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
     df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
     
     df["requirement%"]=(abs(df["totalCapacity"]-df["currentStock"])/df["totalCapacity"])*100
@@ -50,38 +23,10 @@ def Extracting(Product_Type):
 
     return df
 
-def ExtractingFromOfficeId(Product_Type,OfficeList):
+def ExtractingFromOfficeId(df,Product_Type,OfficeList):
 
-    response = requests.get(url)
-    data = response.json()
-
-    # convert the JSON data to a Pandas DataFrame
-    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales","officeId"])
-   
-
-    godown_df = pd.DataFrame(data)
-
-    # Define a function that takes a row of the dataframe as input and returns a tuple of total_capacity and total_current_stock
-    def calculate_total_capacity_and_stock(row):
-
-        if len(row["godownProducts"]):
-            total_capacity = sum(list(pd.DataFrame(row["godownProducts"])["capacity"]))
-            total_current_stock = sum(list(pd.DataFrame(row["godownProducts"])["currentStock"]))
-        else:
-            total_capacity=0
-            total_current_stock=0
-
-        return total_capacity, total_current_stock
-
-    # Use apply() method to apply the function on each row of the dataframe and store the results in new columns
-    godown_df[["totalCapacity", "totalCurrentStock"]] = godown_df.apply(calculate_total_capacity_and_stock, axis=1, result_type="expand")
-
-    # Extract the columns into separate lists
-    currentStock = godown_df["totalCurrentStock"].tolist()
-    capacity = godown_df["totalCapacity"].tolist()
-    
-    df = df.assign(currentStock=currentStock,totalCapacity=capacity)
     # if totalCapacity value is 0 then replace it to 2000
+    df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
     df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
 
      # Select the rows where officeId is in the OfficeList

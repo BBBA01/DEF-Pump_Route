@@ -1,51 +1,24 @@
-import requests
+import pyodbc 
 import pandas as pd
-from config.config import url,DeliveryPlanurl
+import warnings
+warnings.filterwarnings('ignore')
+from config.config import ConnectionString
 
-def ExtractingFromDeliveryPlan(Product_Type,DeliveryPlanId):
+def ExtractingFromDeliveryPlan(df,Product_Type,DeliveryPlanId):
 
-    response = requests.get(url)
-    data = response.json()
-
-    # convert the JSON data to a Pandas DataFrame
-    df = pd.DataFrame(data,columns=['productTypeId','officeName',"latitude","longitude","avgSales","officeId"])
-   
-
-    godown_df = pd.DataFrame(data)
-
-    # Define a function that takes a row of the dataframe as input and returns a tuple of total_capacity and total_current_stock
-    def calculate_total_capacity_and_stock(row):
-
-        if len(row["godownProducts"]):
-            total_capacity = sum(list(pd.DataFrame(row["godownProducts"])["capacity"]))
-            total_current_stock = sum(list(pd.DataFrame(row["godownProducts"])["currentStock"]))
-        else:
-            total_capacity=0
-            total_current_stock=0
-
-        return total_capacity, total_current_stock
-
-    # Use apply() method to apply the function on each row of the dataframe and store the results in new columns
-    godown_df[["totalCapacity", "totalCurrentStock"]] = godown_df.apply(calculate_total_capacity_and_stock, axis=1, result_type="expand")
-
-    # Extract the columns into separate lists
-    currentStock = godown_df["totalCurrentStock"].tolist()
-    capacity = godown_df["totalCapacity"].tolist()
-    
-    df = df.assign(currentStock=currentStock,totalCapacity=capacity)
     # if totalCapacity value is 0 then replace it to 2000
+    df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
     df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
+    cnxn = pyodbc.connect(ConnectionString)
+
 
     for i in DeliveryPlanId:
-        response2=requests.get(f"{DeliveryPlanurl}/{i}")
-        data2 = response2.json()
 
-        if len(data2["deliveryPlanDetailsList"])>0:
-            DeliveryPlan_df=pd.DataFrame(data2["deliveryPlanDetailsList"])
-            office_ids = DeliveryPlan_df['office'].apply(lambda x: x['officeId']).to_list()
+        DeliveryPlanDetails = pd.read_sql_query(f'select OfficeId,DeliveryPlanId from DeliveryPlanDetails where DeliveryPlanId={i}',cnxn)
+        office_ids = DeliveryPlanDetails['OfficeId'].to_list()
             
-            #  Select the rows where officeId is not in the office_ids
-            df = df[~df["officeId"].isin(office_ids)]
+        #  Select the rows where officeId is not in the office_ids
+        df = df[~df["officeId"].isin(office_ids)]
     
     df.reset_index(inplace=True,drop=True)
  
