@@ -10,12 +10,11 @@ def ExtractingFromDeliveryPlan(df,Product_Type,DeliveryPlanId):
     df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
     df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
     cnxn = pyodbc.connect(ConnectionString)
-
+    DeliveryPlanDetails = pd.read_sql_query(f'select OfficeId,DeliveryPlanId from DeliveryPlanDetails',cnxn)
 
     for i in DeliveryPlanId:
-
-        DeliveryPlanDetails = pd.read_sql_query(f'select OfficeId,DeliveryPlanId from DeliveryPlanDetails where DeliveryPlanId={i}',cnxn)
-        office_ids = DeliveryPlanDetails['OfficeId'].to_list()
+        DeliveryPlanDetails_df=DeliveryPlanDetails.loc[DeliveryPlanDetails["DeliveryPlanId"]==i]
+        office_ids = DeliveryPlanDetails_df['OfficeId'].to_list()
             
         #  Select the rows where officeId is not in the office_ids
         df = df[~df["officeId"].isin(office_ids)]

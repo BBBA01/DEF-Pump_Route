@@ -1,6 +1,4 @@
-import requests
-import pandas as pd
-from config.config import url
+
 
 def Extracting(df,Product_Type):
 
