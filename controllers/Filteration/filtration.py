@@ -2,9 +2,11 @@ import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 
 def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
-    df["atDeliveryRequirement"]=df["totalCapacity"]-df["currentStock"]+df["avgSales"]*No_of_days_for_delivery
-    for i in range(len(df)):
-        df.loc[i,"atDeliveryRequirement"]=df.loc[i,"totalCapacity"] if df.loc[i,"atDeliveryRequirement"]>df.loc[i,"totalCapacity"] else df.loc[i,"atDeliveryRequirement"]
+    df["atDeliveryRequirement"]=df["totalCapacity"]-df["currentStock"]+df["avgSales"]*No_of_days_for_delivery 
+    df["atDeliveryRequirement"] = df.apply(lambda row: row["totalCapacity"] if row["atDeliveryRequirement"] > row["totalCapacity"] else row["atDeliveryRequirement"], axis=1)
+
+    # for i in range(len(df)):
+    #     df.loc[i,"atDeliveryRequirement"]=df.loc[i,"totalCapacity"] if df.loc[i,"atDeliveryRequirement"]>df.loc[i,"totalCapacity"] else df.loc[i,"atDeliveryRequirement"]
     df["requirement%"]=df["atDeliveryRequirement"]/df["totalCapacity"]*100
     df["requirement%"].fillna(0,inplace=True)
     df["atDeliveryRequirement"]= (df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
@@ -35,4 +37,4 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     total_requirement=sum(df["atDeliveryRequirement"])
     excess_capacity=Tank_Capacity-total_requirement
 
-    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]].to_dict(orient="records")
+    return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]]

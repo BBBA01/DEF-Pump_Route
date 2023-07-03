@@ -1,37 +1,118 @@
-import pyodbc 
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
-from config.config import ConnectionString
+from flask import Response
 
-def ExtractingFromDeliveryPlan(df,Product_Type,DeliveryPlanId):
+def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
 
-    # if totalCapacity value is 0 then replace it to 2000
-    df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
-    df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
-    cnxn = pyodbc.connect(ConnectionString)
-    DeliveryPlanDetails = pd.read_sql_query(f'select OfficeId,DeliveryPlanId from DeliveryPlanDetails',cnxn)
+    df=pd.read_sql_query(f'''
+                         SELECT
+   df.OfficeId,
+    df.OfficeName,
+   df.Longitude,
+    df.Latitude,
+    df.ProductTypeId,
+    df.CurrentStock,
+    df.totalCapacity,
+    df.avgSales,
+	d.ContainerSize,
+	d.StartPointID,
+	d.StartLatitude,
+	d.StartLongitude,
+	d.DeliveryPlanId,
+    d.CityName,
+    d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity
+FROM(
+SELECT
+    o.OfficeId,
+    o.OfficeName,
+    o.Longitude,
+    o.Latitude,
+    cs.ProductTypeId,
+    cs.CurrentStock,
+    gm.totalCapacity,
+    s.avgSales
+FROM
+    Office o
+LEFT JOIN
+    CurrentStockDetails cs ON o.OfficeId = cs.OfficeId
+LEFT JOIN
+    (
+        SELECT
+            OfficeId,
+            SUM(Capacity) AS totalCapacity
+        FROM
+            GodownMaster
+        GROUP BY
+            OfficeId
+    ) gm ON o.OfficeId = gm.OfficeId
+LEFT JOIN
+    (
+        SELECT
+            OfficeId,
+            AVG(Quantity) AS avgSales
+        FROM
+            Sales
+        WHERE
+            Total > 0
+        GROUP BY
+            OfficeId
+    ) s ON o.OfficeId = s.OfficeId
+	)df
 
-    for i in DeliveryPlanId:
-        DeliveryPlanDetails_df=DeliveryPlanDetails.loc[DeliveryPlanDetails["DeliveryPlanId"]==i]
-        office_ids = DeliveryPlanDetails_df['OfficeId'].to_list()
-            
-        #  Select the rows where officeId is not in the office_ids
-        df = df[~df["officeId"].isin(office_ids)]
-    
-    df.reset_index(inplace=True,drop=True)
- 
-    df["requirement%"]=(abs(df["totalCapacity"]-df["currentStock"])/df["totalCapacity"])*100
+    Inner JOIN(
+    Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
+    dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
+    M.Longitude As StartLongitude,M.CityName
 
-    df=df[df["productTypeId"]==Product_Type]
-    df.reset_index(inplace=True,drop=True)
-    for i in range(len(df)):
-        df.loc[i,"requirement%"]=100 if df.loc[i,"requirement%"]>100 else df.loc[i,"requirement%"]
+    from DeliveryPlanDetails dpd
 
-    df["requirement%"].fillna(0,inplace=True)
-    df.dropna(inplace=True)
-    df.reset_index(inplace=True,drop=True)
-    df.sort_values(by="requirement%",inplace=True,ascending=False)
-    df.reset_index(inplace=True,drop=True)
+    left join
+    DeliveryPlan dp
 
-    return df
+    on dpd.DeliveryPlanId=dp.DeliveryPlanId
+
+    left join
+    CityMaster M
+
+    on dp.StartPointId=M.CityId
+    Where 
+    dp.DeliveryPlanId={DeliveryPlanId} And
+    (ApproveStatus IS Null OR ApproveStatus!=-1)
+        )As d
+    On d.OfficeId=df.OfficeId  
+;
+                         ''',cnxn)
+    df.rename(
+            columns={
+                "OfficeId": "officeId",
+                "OfficeName": "officeName",
+                "Longitude": "longitude",
+                "Latitude": "latitude",
+                "CurrentQuantity": "currentStock",
+                "AvailableQuantity": "availableQuantity",
+                "PlannedQuantity": "availableQuantity",
+                "PlannedQuantity": "atDeliveryRequirement",
+                "ProductTypeId": "productTypeId",
+            },
+            inplace=True,
+        )
+  # if totalCapacity value is 0 then replace it to 2000
+    if (len(df)>0):
+        df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
+        df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
+        
+
+        df[["latitude","longitude"]].dropna(inplace=True)
+        df.reset_index(inplace=True,drop=True)
+
+        Starting_PointId = df["StartPointID"][0]
+        Starting_PointName = df["CityName"][0]
+        Starting_Point_latitude = df["StartLatitude"][0]
+        Starting_Point_longitude = df["StartLongitude"][0]
+        total_requirement=df['atDeliveryRequirement'].dropna().sum()
+        excess_capacity= df["ContainerSize"][0]-total_requirement
+
+        return df,Starting_PointId,Starting_PointName,Starting_Point_latitude,Starting_Point_longitude,total_requirement,excess_capacity
+    else:
+        return df,0,0,0,0,0,0
