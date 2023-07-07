@@ -1,11 +1,12 @@
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-from datetime import date
+import datetime
 
 
 def Extracting( Product_Type,cnxn):
-    Begindate = str(date.today())
+    Begindate = datetime.datetime.now()
+    Begindate = Begindate.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
    
     df=pd.read_sql_query(f'''
                          SELECT
@@ -79,7 +80,7 @@ def Extracting( Product_Type,cnxn):
 
         WHERE
         dp.ProductId = {Product_Type}
-        AND dp.PlanDate <= '{Begindate}'
+        AND dp.CreatedOn <= '{Begindate}'
         AND dp.ExpectedDeliveryDate >= '{Begindate}'
         AND dp.DeliveryPlanStatusId <= 3
         AND (dpd.ApproveStatus is NULL OR dpd.ApproveStatus!=-1)
@@ -203,6 +204,8 @@ o.OfficeId IN {tuple(OfficeList)}
     Not_selected["atDeliveryRequirement"]= (Not_selected["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
     Not_selected["currentStock"]=Not_selected["currentStock"]-Not_selected["avgSales"]*No_of_days_for_delivery
     Not_selected["availableQuantity"]=Not_selected["totalCapacity"]-Not_selected["currentStock"]
+    df["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
+    Not_selected["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
                                      
     
     Not_selected.sort_values(by="requirement%",inplace=True,ascending=False)

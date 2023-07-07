@@ -72,8 +72,8 @@ def create_post():
         Not_selected=pd.merge(Not_selected,Not_selected2,how='outer')
         Not_selected=Not_selected.to_dict(orient="records")
         
-        Starting_Point_df=pd.read_sql_query(f'Select CityId,CityName,Latitude,Longitude from CityMaster where CityId={Starting_PointId}', cnxn)
-        Starting_PointName = Starting_Point_df["CityName"][0]
+        Starting_Point_df=pd.read_sql_query(f'Select HubName,Latitude,Longitude from Hub where HubId={Starting_PointId}', cnxn)
+        Starting_PointName = Starting_Point_df["HubName"][0]
         Starting_Point_latitude = Starting_Point_df["Latitude"][0]
         Starting_Point_longitude = Starting_Point_df["Longitude"][0]
     else:
@@ -83,8 +83,8 @@ def create_post():
             df, Tank_Capacity, No_of_days_for_delivery, minimum_multiple
         )
         Not_selected=Not_selected.to_dict(orient="records")
-        Starting_Point_df=pd.read_sql_query(f'Select CityId,CityName,Latitude,Longitude from CityMaster where CityId={Starting_PointId}', cnxn)
-        Starting_PointName = Starting_Point_df["CityName"][0]
+        Starting_Point_df=pd.read_sql_query(f'Select HubName,Latitude,Longitude from Hub where HubId={Starting_PointId}', cnxn)
+        Starting_PointName = Starting_Point_df["HubName"][0]
         Starting_Point_latitude = Starting_Point_df["Latitude"][0]
         Starting_Point_longitude = Starting_Point_df["Longitude"][0]
 

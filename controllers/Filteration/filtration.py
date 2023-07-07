@@ -35,6 +35,8 @@ def Filtering(df,Tank_Capacity,No_of_days_for_delivery,minimum_multiple):
     df.reset_index(drop=True,inplace=True)
     df.sort_values(by="requirement%",inplace=True,ascending=False)
     total_requirement=sum(df["atDeliveryRequirement"])
+    df["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
+    Not_selected["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
     excess_capacity=Tank_Capacity-total_requirement
 
     return df,total_requirement,excess_capacity,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]]

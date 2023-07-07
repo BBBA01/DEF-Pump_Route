@@ -1,7 +1,6 @@
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
-from flask import Response
 
 def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
 
@@ -11,16 +10,13 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
     df.OfficeName,
    df.Longitude,
     df.Latitude,
-    df.ProductTypeId,
-    df.CurrentStock,
     df.totalCapacity,
-    df.avgSales,
 	d.ContainerSize,
 	d.StartPointID,
 	d.StartLatitude,
 	d.StartLongitude,
 	d.DeliveryPlanId,
-    d.CityName,
+    d.HubName,
     d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity
 FROM(
 SELECT
@@ -28,14 +24,11 @@ SELECT
     o.OfficeName,
     o.Longitude,
     o.Latitude,
-    cs.ProductTypeId,
-    cs.CurrentStock,
-    gm.totalCapacity,
-    s.avgSales
+    gm.totalCapacity
+ 
 FROM
     Office o
-LEFT JOIN
-    CurrentStockDetails cs ON o.OfficeId = cs.OfficeId
+
 LEFT JOIN
     (
         SELECT
@@ -46,24 +39,13 @@ LEFT JOIN
         GROUP BY
             OfficeId
     ) gm ON o.OfficeId = gm.OfficeId
-LEFT JOIN
-    (
-        SELECT
-            OfficeId,
-            AVG(Quantity) AS avgSales
-        FROM
-            Sales
-        WHERE
-            Total > 0
-        GROUP BY
-            OfficeId
-    ) s ON o.OfficeId = s.OfficeId
+
 	)df
 
     Inner JOIN(
     Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
     dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
-    M.Longitude As StartLongitude,M.CityName
+    M.Longitude As StartLongitude,M.HubName
 
     from DeliveryPlanDetails dpd
 
@@ -73,9 +55,9 @@ LEFT JOIN
     on dpd.DeliveryPlanId=dp.DeliveryPlanId
 
     left join
-    CityMaster M
+    Hub M
 
-    on dp.StartPointId=M.CityId
+    on dp.StartPointId=M.HubId
     Where 
     dp.DeliveryPlanId={DeliveryPlanId} And
     (ApproveStatus IS Null OR ApproveStatus!=-1)
@@ -92,8 +74,7 @@ LEFT JOIN
                 "CurrentQuantity": "currentStock",
                 "AvailableQuantity": "availableQuantity",
                 "PlannedQuantity": "availableQuantity",
-                "PlannedQuantity": "atDeliveryRequirement",
-                "ProductTypeId": "productTypeId",
+                "PlannedQuantity": "atDeliveryRequirement"
             },
             inplace=True,
         )
@@ -107,7 +88,7 @@ LEFT JOIN
         df.reset_index(inplace=True,drop=True)
 
         Starting_PointId = df["StartPointID"][0]
-        Starting_PointName = df["CityName"][0]
+        Starting_PointName = df["HubName"][0]
         Starting_Point_latitude = df["StartLatitude"][0]
         Starting_Point_longitude = df["StartLongitude"][0]
         total_requirement=df['atDeliveryRequirement'].dropna().sum()
