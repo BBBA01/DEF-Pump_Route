@@ -204,7 +204,6 @@ o.OfficeId IN {tuple(OfficeList)}
     Not_selected["atDeliveryRequirement"]= (Not_selected["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
     Not_selected["currentStock"]=Not_selected["currentStock"]-Not_selected["avgSales"]*No_of_days_for_delivery
     Not_selected["availableQuantity"]=Not_selected["totalCapacity"]-Not_selected["currentStock"]
-    df["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
     Not_selected["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
                                      
     
