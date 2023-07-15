@@ -116,6 +116,59 @@
           }
         }
      },
+      "/api/v1/dashboard/payment/{FromDate}/{ToDate}/{OfficeId}/{IsAdmin}": {
+        
+        "get": {
+          "tags": [
+            "Dashboard"
+          ],
+          "summary": "Get PaymentMode list",
+          "parameters": [
+            {
+              "name": "FromDate",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"2023-07-01"
+              }
+            },
+            {
+              "name": "ToDate",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"2023-07-10"
+              }
+            },
+            {
+              "name": "OfficeId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"06D5DDA0-6834-4EA1-183D-08DAF95AD4EF1"
+              }
+            },
+            {
+              "name": "IsAdmin",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"number",
+                 "example":6
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+             
+            }
+          }
+        }
+     },
       "/api/v1/dashboard/card_details_list/{OfficeId}/{IsAdmin}": {
         
         "get": {
@@ -142,6 +195,103 @@
                  "example":1
               }
             }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+             
+            }
+          }
+        }
+     },
+      "/api/v1/dashboard/godowntype/{OfficeId}/{IsAdmin}": {
+        
+        "get": {
+          "tags": [
+            "Dashboard"
+          ],
+          "summary": "Get GodownType list (Tank,General,Reserver)",
+          "parameters": [
+            {
+              "name": "OfficeId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"46A1C7B7-6885-4F74-7ADE-08DAFE23C727"
+              }
+            },
+            {
+              "name": "IsAdmin",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"number",
+                 "example":1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+             
+            }
+          }
+        }
+     },
+      "/api/v1/dashboard/godown_details_list/{OfficeId}/{IsAdmin}": {
+        
+        "get": {
+          "tags": [
+            "Dashboard"
+          ],
+          "summary": "Get Godown Stock Details",
+          "parameters": [
+            {
+              "name": "OfficeId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"46A1C7B7-6885-4F74-7ADE-08DAFE23C727"
+              }
+            },
+            {
+              "name": "IsAdmin",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"number",
+                 "example":1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+             
+            }
+          }
+        }
+     },
+      "/api/v1/dashboard/userdetails/{UserId}": {
+        
+        "get": {
+          "tags": [
+            "User Details"
+          ],
+          "summary": "Get User Details",
+          "parameters": [
+            {
+              "name": "UserId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"8379AC15-C52A-4F2E-D69C-08DAF9596B0B"
+              }
+            }
+          
           ],
           "responses": {
             "200": {

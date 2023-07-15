@@ -10,7 +10,7 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
     df.OfficeName,
    df.Longitude,
     df.Latitude,
-    df.totalCapacity,
+    
 	d.ContainerSize,
 	d.StartPointID,
 	d.StartLatitude,
@@ -18,29 +18,8 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
 	d.DeliveryPlanId,
     d.HubName,
     d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity
-FROM(
-SELECT
-    o.OfficeId,
-    o.OfficeName,
-    o.Longitude,
-    o.Latitude,
-    gm.totalCapacity
- 
 FROM
-    Office o
-
-LEFT JOIN
-    (
-        SELECT
-            OfficeId,
-            SUM(Capacity) AS totalCapacity
-        FROM
-            GodownMaster
-        GROUP BY
-            OfficeId
-    ) gm ON o.OfficeId = gm.OfficeId
-
-	)df
+    Office df
 
     Inner JOIN(
     Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
@@ -58,6 +37,7 @@ LEFT JOIN
     Hub M
 
     on dp.StartPointId=M.HubId
+	
     Where 
     dp.DeliveryPlanId={DeliveryPlanId} And
     (ApproveStatus IS Null OR ApproveStatus!=-1)
@@ -73,13 +53,13 @@ LEFT JOIN
                 "Latitude": "latitude",
                 "CurrentQuantity": "currentStock",
                 "AvailableQuantity": "availableQuantity",
-                "PlannedQuantity": "availableQuantity",
                 "PlannedQuantity": "atDeliveryRequirement"
             },
             inplace=True,
         )
   # if totalCapacity value is 0 then replace it to 2000
     if (len(df)>0):
+        df["totalCapacity"]=df["availableQuantity"]+df["currentStock"]
         df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
         df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
         

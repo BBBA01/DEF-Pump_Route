@@ -35,13 +35,15 @@ def Extracting( Product_Type,cnxn):
         CurrentStockDetails cs ON o.OfficeId = cs.OfficeId
     LEFT JOIN
         (
-            SELECT
-                OfficeId,
-                SUM(Capacity) AS totalCapacity
-            FROM
-                GodownMaster
-            GROUP BY
-                OfficeId
+           Select Sum(su.Capacity) As totalCapacity,su.OfficeId From
+(SELECT GM2.OfficeId, GM2.Capacity,GPM.ProductId
+        FROM
+            GodownMaster GM2
+		Left Join
+GodownProductMapper GPM ON GPM.GodownId=GM2.GodownId)su
+Where su.ProductId={Product_Type}
+Group By
+su.OfficeId
         ) gm ON o.OfficeId = gm.OfficeId
     LEFT JOIN
         (
@@ -139,13 +141,15 @@ LEFT JOIN
 
 LEFT JOIN
     (
-        SELECT
-            OfficeId,
-            SUM(Capacity) AS totalCapacity
+        Select Sum(su.Capacity) As totalCapacity,su.OfficeId From
+(SELECT GM2.OfficeId, GM2.Capacity,GPM.ProductId
         FROM
-            GodownMaster
-        GROUP BY
-            OfficeId
+            GodownMaster GM2
+		Left Join
+GodownProductMapper GPM ON GPM.GodownId=GM2.GodownId)su
+Where su.ProductId={Product_Type}
+Group By
+su.OfficeId
     ) gm ON o.OfficeId = gm.OfficeId
 LEFT JOIN
     (
@@ -160,7 +164,7 @@ LEFT JOIN
             OfficeId
     ) s ON o.OfficeId = s.OfficeId
 	Where
-o.OfficeId IN {tuple(OfficeList)}
+o.OfficeId IN {tuple(OfficeList) if len(OfficeList)>1 else f"('{OfficeList[0]}')"}
 
     ;
 ''',cnxn)

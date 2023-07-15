@@ -11,6 +11,10 @@ from controllers.Extraction.extraExtraction import ExtractingFromDeliveryPlan
 from controllers.Dashboard.Sales.dropdown_list import dropdown_list
 from controllers.Dashboard.Sales.sales_list import sales_based_on_admin
 from controllers.Dashboard.Sales.card_details import CardDetails
+from controllers.Dashboard.Godown_stocks.godown_list import Godown_list
+from controllers.Dashboard.Godown_stocks.godownType_list import GodownType
+from controllers.Dashboard.User_Details.user import UserDetails
+from controllers.Dashboard.Sales.paymentmode import paymentMode
 from controllers.Filteration.filtration import Filtering
 from controllers.RouteFinding.Algo01 import Route_plan_without_priority
 
@@ -159,3 +163,48 @@ def card_details_list(_OfficeId,_IsAdmin):
     json = CardDetails(office_id,is_admin,cnxn)
     cnxn.close()
     return json
+
+@route_page.route("/api/v1/dashboard/godown_details_list/<string:_OfficeId>/<string:_IsAdmin>", methods=["GET"])
+def godown_details_list(_OfficeId,_IsAdmin):
+    
+    office_id = _OfficeId
+    is_admin = int(_IsAdmin)
+
+    cnxn = pyodbc.connect(ConnectionString)
+    json = Godown_list(office_id,is_admin,cnxn)
+    cnxn.close()
+    return jsonify(json)
+
+@route_page.route("/api/v1/dashboard/payment/<string:_FromDate>/<string:_ToDate>/<string:_OfficeId>/<string:_IsAdmin>", methods=["GET"])
+def payment_details(_FromDate,_ToDate,_OfficeId,_IsAdmin):
+
+    from_date = _FromDate
+    to_date = _ToDate
+    office_id = _OfficeId
+    is_admin = int(_IsAdmin)
+
+    cnxn = pyodbc.connect(ConnectionString)
+    json = paymentMode(office_id,is_admin,from_date,to_date,cnxn)
+    cnxn.close()
+    return json
+
+@route_page.route("/api/v1/dashboard/godowntype/<string:_OfficeId>/<string:_IsAdmin>", methods=["GET"])
+def godownType(_OfficeId,_IsAdmin):
+
+    office_id = _OfficeId
+    is_admin = int(_IsAdmin)
+
+    cnxn = pyodbc.connect(ConnectionString)
+    json = GodownType(office_id,is_admin,cnxn)
+    cnxn.close()
+    return json
+
+@route_page.route("/api/v1/dashboard/userdetails/<string:_UserId>", methods=["GET"])
+def Userdetails(_UserId):
+
+    user_id = _UserId
+
+    cnxn = pyodbc.connect(ConnectionString)
+    json = UserDetails(user_id,cnxn)
+    cnxn.close()
+    return jsonify(json)
