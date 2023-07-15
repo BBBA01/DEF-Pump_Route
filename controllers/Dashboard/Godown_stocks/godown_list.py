@@ -129,7 +129,7 @@ def Godown_list(office_id,is_admin,cnxn):
                 result.append(data)
     elif is_admin==4:
         df=Godown_list_level(office_id,-1,cnxn)
-        df=df[df["GodownTypeId"]==2]
+        # df=df[df["GodownTypeId"]==2]
         df=df[~((df["officeType"]!="Company")& (df["masterOfficeId"].str.lower()==office_id.lower()))]
         grouped = df.groupby('ProductTypeId')
 
@@ -210,7 +210,7 @@ def Godown_list(office_id,is_admin,cnxn):
                 result.append(data)
     elif is_admin==2:
         df=Godown_list_level(office_id,1,cnxn)
-        df=df[df["GodownTypeId"]==2]
+        # df=df[df["GodownTypeId"]==2]
    
         df=df[df["officeType"]=="Retail Pumps"]
         grouped = df.groupby('ProductTypeId')
@@ -238,7 +238,7 @@ def Godown_list(office_id,is_admin,cnxn):
                 result.append(data)
     elif is_admin==0:
         df=Godown_list_level(office_id,1,cnxn)
-        df=df[df["GodownTypeId"]==2]
+        # df=df[df["GodownTypeId"]==2]
         df=df[df["officeId"].str.lower()==office_id.lower()]
       
         grouped = df.groupby('ProductTypeId')
