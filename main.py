@@ -1,7 +1,10 @@
 from flask import Flask
 from routes.route import route_page
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
+
 
 ### swagger specific ###
 SWAGGER_URL = ''
@@ -10,7 +13,7 @@ SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={
-        'app_name': "DEF Pumpline",
+        'app_name': "DEF Pumps",
     }
 )
 app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
