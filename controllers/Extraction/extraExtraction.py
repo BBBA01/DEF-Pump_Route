@@ -1,8 +1,9 @@
 import pandas as pd
+from controllers.Extraction.extraction import Extracting
 import warnings
 warnings.filterwarnings('ignore')
 
-def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
+def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn,No_of_days_for_delivery):
 
     df=pd.read_sql_query(f'''
                          SELECT
@@ -17,14 +18,14 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn):
 	d.StartLongitude,
 	d.DeliveryPlanId,
     d.HubName,
-    d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity
+    d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity,d.ProductId,d.DeliveryLimit
 FROM
     Office df
 
     Inner JOIN(
     Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
     dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
-    M.Longitude As StartLongitude,M.HubName
+    M.Longitude As StartLongitude,M.HubName,dp.ProductId,dp.DeliveryLimit
 
     from DeliveryPlanDetails dpd
 
@@ -58,8 +59,8 @@ FROM
             inplace=True,
         )
   # if totalCapacity value is 0 then replace it to 2000
+    df["totalCapacity"]=df["availableQuantity"]+df["currentStock"]
     if (len(df)>0):
-        df["totalCapacity"]=df["availableQuantity"]+df["currentStock"]
         df[["currentStock","totalCapacity"]].fillna(0,inplace=True)
         df["totalCapacity"].replace(to_replace = 0,value = 2000,inplace=True)
         
@@ -73,7 +74,27 @@ FROM
         Starting_Point_longitude = df["StartLongitude"][0]
         total_requirement=df['atDeliveryRequirement'].dropna().sum()
         excess_capacity= df["ContainerSize"][0]-total_requirement
+        product_id=df["ProductId"][0]
+        minimum_multiple=df["DeliveryLimit"][0]
+        No_of_days_for_delivery=0 if No_of_days_for_delivery is None else No_of_days_for_delivery
 
-        return df,Starting_PointId,Starting_PointName,Starting_Point_latitude,Starting_Point_longitude,total_requirement,excess_capacity
+        Unselected_df=Extracting( product_id,cnxn)
+        office_list=df["officeId"].to_list()
+        Unselected_df=Unselected_df[~Unselected_df["officeId"].isin(office_list)]
+    
+        Unselected_df["atDeliveryRequirement"]=Unselected_df["totalCapacity"]-Unselected_df["currentStock"]+Unselected_df["avgSales"]*No_of_days_for_delivery 
+        Unselected_df["atDeliveryRequirement"] = Unselected_df.apply(lambda row: row["totalCapacity"] if row["atDeliveryRequirement"] > row["totalCapacity"] else row["atDeliveryRequirement"], axis=1)
+        Unselected_df["requirement%"]=Unselected_df["atDeliveryRequirement"]/Unselected_df["totalCapacity"]*100
+        Unselected_df["requirement%"].fillna(0,inplace=True)
+        Unselected_df["atDeliveryRequirement"]= (Unselected_df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
+        Unselected_df["currentStock"]=Unselected_df["currentStock"]-Unselected_df["avgSales"]*No_of_days_for_delivery
+        Unselected_df["availableQuantity"]=Unselected_df["totalCapacity"]-Unselected_df["currentStock"]
+        Unselected_df["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
+                                        
+        
+        Unselected_df.sort_values(by="requirement%",inplace=True,ascending=False)
+        Unselected_df.reset_index(drop=True,inplace=True)
+
+        return df,Starting_PointId,Starting_PointName,Starting_Point_latitude,Starting_Point_longitude,total_requirement,excess_capacity,Unselected_df[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]].to_dict(orient="records")
     else:
-        return df,0,0,0,0,0,0
+        return df,0,0,0,0,0,0,[]

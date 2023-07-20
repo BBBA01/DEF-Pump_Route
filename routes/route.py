@@ -71,8 +71,8 @@ def create_post():
             Starting_Point_longitude,
             total_requirement,
             excess_capacity,
-        ) = ExtractingFromDeliveryPlan(DeliveryPlanId, cnxn)
-        Not_selected = []
+            Not_selected
+        ) = ExtractingFromDeliveryPlan(DeliveryPlanId, cnxn,No_of_days_for_delivery)
 
     elif Office_list and len(Office_list) > 0:
         df, Not_selected2 = ExtractingFromOfficeId(
