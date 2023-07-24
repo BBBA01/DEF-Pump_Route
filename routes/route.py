@@ -71,8 +71,37 @@ def create_post():
             Starting_Point_longitude,
             total_requirement,
             excess_capacity,
-            Not_selected
+            Not_selected,
+            DeliveryLimit,PlanDate,ExpectedDeliveryDate,DeliveryPlanStatusId,CreatedBy,UpdatedBy,CreatedOn,UpdatedOn
         ) = ExtractingFromDeliveryPlan(DeliveryPlanId, cnxn,No_of_days_for_delivery)
+        optimal_route1 = Route_plan_without_priority(
+        df,
+        Starting_PointName,
+        str(Starting_PointId),
+        Starting_Point_latitude,
+        Starting_Point_longitude,
+    )
+        return jsonify(
+        Plan_date=PlanDate,
+        ExpectedDelivery_date=ExpectedDeliveryDate,
+        DeliveryPlan_statusId=DeliveryPlanStatusId,
+        Created_by=CreatedBy,
+        Updated_by=UpdatedBy,
+        Created_on=CreatedOn,
+        Updated_on=UpdatedOn,
+        Delivery_limit=DeliveryLimit,
+        StartPoint_id=int(Starting_PointId),
+        Total_requirement=total_requirement,
+        Excess_capacity=excess_capacity,
+        Not_selected=Not_selected,
+        Routes={
+            "Algorithm_1": {
+                "Description": "Routing based on Nearest Branch",
+                "Route": optimal_route1[0],
+                "Total_distance": optimal_route1[1],
+            },
+        },
+    )
 
     elif Office_list and len(Office_list) > 0:
         df, Not_selected2 = ExtractingFromOfficeId(

@@ -18,14 +18,16 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn,No_of_days_for_delivery):
 	d.StartLongitude,
 	d.DeliveryPlanId,
     d.HubName,
-    d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity,d.ProductId,d.DeliveryLimit
+    d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity,d.ProductId,d.DeliveryLimit,
+                         d.PlanDate,d.ExpectedDeliveryDate,d.DeliveryPlanStatusId,d.CreatedBy,d.UpdatedBy,d.CreatedOn,d.UpdatedOn
 FROM
     Office df
 
     Inner JOIN(
     Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
     dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
-    M.Longitude As StartLongitude,M.HubName,dp.ProductId,dp.DeliveryLimit
+    M.Longitude As StartLongitude,M.HubName,dp.ProductId,dp.DeliveryLimit,
+                         dp.PlanDate,dp.ExpectedDeliveryDate,dp.DeliveryPlanStatusId,dp.CreatedBy,dp.UpdatedBy,dp.CreatedOn,dp.UpdatedOn
 
     from DeliveryPlanDetails dpd
 
@@ -76,6 +78,19 @@ FROM
         excess_capacity= df["ContainerSize"][0]-total_requirement
         product_id=df["ProductId"][0]
         minimum_multiple=df["DeliveryLimit"][0]
+        PlanDate=df["PlanDate"][0]
+        ExpectedDeliveryDate=df["ExpectedDeliveryDate"][0]
+        DeliveryPlanStatusId=df["DeliveryPlanStatusId"][0]
+        CreatedBy=df["CreatedBy"][0]
+        UpdatedBy=df["UpdatedBy"][0]
+        CreatedOn=df["CreatedOn"][0]
+        UpdatedOn=df["UpdatedOn"][0]
+        # Converting the datetime object into string
+        PlanDate=PlanDate.strftime("%d-%m-%Y")
+        ExpectedDeliveryDate=ExpectedDeliveryDate.strftime("%d-%m-%Y")
+        CreatedOn=CreatedOn.strftime("%d-%m-%Y")
+        UpdatedOn=UpdatedOn.strftime("%d-%m-%Y")
+
         No_of_days_for_delivery=0 if No_of_days_for_delivery is None else No_of_days_for_delivery
 
         Unselected_df=Extracting( product_id,cnxn)
@@ -95,6 +110,6 @@ FROM
         Unselected_df.sort_values(by="requirement%",inplace=True,ascending=False)
         Unselected_df.reset_index(drop=True,inplace=True)
 
-        return df,Starting_PointId,Starting_PointName,Starting_Point_latitude,Starting_Point_longitude,total_requirement,excess_capacity,Unselected_df[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]].to_dict(orient="records")
+        return df,Starting_PointId,Starting_PointName,Starting_Point_latitude,Starting_Point_longitude,total_requirement,excess_capacity,Unselected_df[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]].to_dict(orient="records"),minimum_multiple,PlanDate,ExpectedDeliveryDate,int(DeliveryPlanStatusId),CreatedBy,UpdatedBy,CreatedOn,UpdatedOn
     else:
-        return df,0,0,0,0,0,0,[]
+        return df,0,0,0,0,0,0,[],None,None,None,None,None,None,None,None

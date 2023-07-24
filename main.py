@@ -3,6 +3,7 @@ from routes.route import route_page
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_cors import CORS
 app = Flask(__name__)
+app.json.sort_keys = False
 CORS(app)
 
 
