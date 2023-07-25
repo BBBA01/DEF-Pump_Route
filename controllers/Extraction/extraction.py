@@ -193,13 +193,27 @@ o.OfficeId IN {tuple(OfficeList) if len(OfficeList)>1 else f"('{OfficeList[0]}')
 
     df["requirement%"].fillna(0, inplace=True)
     df.dropna(inplace=True)
+
+    df["atDeliveryRequirement"]=df["totalCapacity"]-df["currentStock"]+df["avgSales"]*No_of_days_for_delivery 
+    df["atDeliveryRequirement"] = df.apply(lambda row: row["totalCapacity"] if row["atDeliveryRequirement"] > row["totalCapacity"] else row["atDeliveryRequirement"], axis=1)
+
+    df["requirement%"]=df["atDeliveryRequirement"]/df["totalCapacity"]*100
+    df["requirement%"].fillna(0,inplace=True)
+    df["atDeliveryRequirement"]= (df["atDeliveryRequirement"]//minimum_multiple)*minimum_multiple
+    df["currentStock"]=df["currentStock"]-df["avgSales"]*No_of_days_for_delivery
+    df["availableQuantity"]=df["totalCapacity"]-df["currentStock"]
+    df["atDeliveryRequirement"].replace(to_replace=0, value=minimum_multiple, inplace=True)
     
     df.sort_values(by="requirement%", inplace=True, ascending=False)
     df.reset_index(inplace=True, drop=True)
 
-    df2=Extracting( Product_Type,cnxn)
+    total_requirement=df['atDeliveryRequirement'].dropna().sum()
 
-    Not_selected=pd.merge(df2,df,indicator=True,how='outer').query('_merge=="left_only"').drop('_merge',axis=1)
+    df2=Extracting( Product_Type,cnxn)
+    office_list=df["officeId"].to_list()
+    Not_selected=df2[~df2["officeId"].isin(office_list)]
+
+    # Not_selected=pd.merge(df2,df,indicator=True,how='outer').query('_merge=="left_only"').drop('_merge',axis=1)
     Not_selected["atDeliveryRequirement"]=Not_selected["totalCapacity"]-Not_selected["currentStock"]+Not_selected["avgSales"]*No_of_days_for_delivery 
     Not_selected["atDeliveryRequirement"] = Not_selected.apply(lambda row: row["totalCapacity"] if row["atDeliveryRequirement"] > row["totalCapacity"] else row["atDeliveryRequirement"], axis=1)
 
@@ -214,4 +228,4 @@ o.OfficeId IN {tuple(OfficeList) if len(OfficeList)>1 else f"('{OfficeList[0]}')
     Not_selected.sort_values(by="requirement%",inplace=True,ascending=False)
     Not_selected.reset_index(drop=True,inplace=True)
 
-    return df,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]]
+    return df,total_requirement,Not_selected[["officeName","latitude","longitude","atDeliveryRequirement","officeId","totalCapacity","currentStock","availableQuantity"]]

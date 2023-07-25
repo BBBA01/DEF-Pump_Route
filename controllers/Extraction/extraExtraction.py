@@ -19,7 +19,8 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn,No_of_days_for_delivery):
 	d.DeliveryPlanId,
     d.HubName,
     d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity,d.ProductId,d.DeliveryLimit,
-                         d.PlanDate,d.ExpectedDeliveryDate,d.DeliveryPlanStatusId,d.CreatedBy,d.UpdatedBy,d.CreatedOn,d.UpdatedOn
+                         d.PlanDate,d.ExpectedDeliveryDate,d.DeliveryPlanStatusId,d.CreatedBy,d.UpdatedBy,d.CreatedOn,d.UpdatedOn,
+                         d.DeliveryPlanDetailsId,d.SequenceNo,d.AdminId
 FROM
     Office df
 
@@ -27,7 +28,8 @@ FROM
     Select dpd.DeliveryPlanId,dpd.OfficeId,dpd.PlannedQuantity,dpd.CurrentQuantity,dpd.AvailableQuantity,dpd.ApproveStatus,
     dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
     M.Longitude As StartLongitude,M.HubName,dp.ProductId,dp.DeliveryLimit,
-                         dp.PlanDate,dp.ExpectedDeliveryDate,dp.DeliveryPlanStatusId,dp.CreatedBy,dp.UpdatedBy,dp.CreatedOn,dp.UpdatedOn
+                         dp.PlanDate,dp.ExpectedDeliveryDate,dp.DeliveryPlanStatusId,dp.CreatedBy,dp.UpdatedBy,dp.CreatedOn,dp.UpdatedOn,
+                         dpd.DeliveryPlanDetailsId,dpd.AdminId,dpd.SequenceNo
 
     from DeliveryPlanDetails dpd
 
@@ -86,10 +88,10 @@ FROM
         CreatedOn=df["CreatedOn"][0]
         UpdatedOn=df["UpdatedOn"][0]
         # Converting the datetime object into string
-        PlanDate=PlanDate.strftime("%d-%m-%Y")
-        ExpectedDeliveryDate=ExpectedDeliveryDate.strftime("%d-%m-%Y")
-        CreatedOn=CreatedOn.strftime("%d-%m-%Y")
-        UpdatedOn=UpdatedOn.strftime("%d-%m-%Y")
+        PlanDate=PlanDate.strftime("%Y-%m-%d") if PlanDate is not None else None
+        ExpectedDeliveryDate=ExpectedDeliveryDate.strftime("%Y-%m-%d") if ExpectedDeliveryDate is not None else None
+        CreatedOn=CreatedOn.strftime("%Y-%m-%d") if CreatedOn is not None else None 
+        UpdatedOn=UpdatedOn.strftime("%Y-%m-%d") if UpdatedOn is not None else None
 
         No_of_days_for_delivery=0 if No_of_days_for_delivery is None else No_of_days_for_delivery
 

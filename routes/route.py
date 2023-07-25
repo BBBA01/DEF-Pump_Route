@@ -1,5 +1,6 @@
 from flask import jsonify, request
 import pandas as pd
+import numpy as np
 import pyodbc
 import warnings
 
@@ -81,6 +82,9 @@ def create_post():
         Starting_Point_latitude,
         Starting_Point_longitude,
     )
+        df=pd.merge(pd.DataFrame(optimal_route1[0]),df[["officeId","AdminId","DeliveryPlanId","DeliveryPlanDetailsId","SequenceNo"]],on="officeId",how="left")
+        df = df.replace({np.nan: None})
+
         return jsonify(
         Plan_date=PlanDate,
         ExpectedDelivery_date=ExpectedDeliveryDate,
@@ -97,22 +101,19 @@ def create_post():
         Routes={
             "Algorithm_1": {
                 "Description": "Routing based on Nearest Branch",
-                "Route": optimal_route1[0],
+                "Route": df.to_dict(orient="records"),
                 "Total_distance": optimal_route1[1],
             },
         },
     )
 
     elif Office_list and len(Office_list) > 0:
-        df, Not_selected2 = ExtractingFromOfficeId(
+        df,total_requirement,Not_selected2 = ExtractingFromOfficeId(
             Product_TypeId, Office_list, cnxn, No_of_days_for_delivery, minimum_multiple
         )
 
-        df, total_requirement, excess_capacity, Not_selected = Filtering(
-            df, Tank_Capacity, No_of_days_for_delivery, minimum_multiple
-        )
-        Not_selected = pd.merge(Not_selected, Not_selected2, how="outer")
-        Not_selected = Not_selected.to_dict(orient="records")
+        excess_capacity=Tank_Capacity-total_requirement if Tank_Capacity is not None else None
+        Not_selected = Not_selected2.to_dict(orient="records")
 
         Starting_Point_df = pd.read_sql_query(
             f"Select HubName,Latitude,Longitude from Hub where HubId={Starting_PointId}",
