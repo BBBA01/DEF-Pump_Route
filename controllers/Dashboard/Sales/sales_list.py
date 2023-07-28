@@ -274,7 +274,7 @@ def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
     elif is_admin==3:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        if(df1[df1["officeId"]==office_id]["officeType"].values[0]=="Company" or df2[df2["officeId"]==office_id]["officeType"].values[0]=="Company"):
+        if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
             df1=df1[df1["officeType"]=="Wholesale Pumps"]
             df2=df2[df2["officeType"]=="Wholesale Pumps"]
             for i in date_range:
@@ -303,7 +303,7 @@ def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
     elif is_admin==2:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        if(df1[df1["officeId"]==office_id]["officeType"].values[0]=="Company" or df2[df2["officeId"]==office_id]["officeType"].values[0]=="Company"):
+        if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
             df1=df1[df1["officeType"]=="Retail Pumps"]
             df2=df2[df2["officeType"]=="Retail Pumps"]
             for i in date_range:
