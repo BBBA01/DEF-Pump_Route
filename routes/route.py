@@ -85,14 +85,7 @@ def create_post():
         if (len(df)>0):
             df=pd.merge(pd.DataFrame(optimal_route1[0]),df[["officeId","AdminId","DeliveryPlanId","DeliveryPlanDetailsId","SequenceNo","ReceivedQuantity","DeliveryPlanStatusId","ApproveStatus"]],on="officeId",how="left")
             df = df.replace({np.nan: None})
-            df.rename(
-                columns={
-                    "currentStock":"CurrentQuantity",
-                    "availableQuantity": "AvailableQuantity",
-                    "atDeliveryRequirement":"PlannedQuantity"
-                },
-                inplace=True,
-            )
+            
 
         return jsonify(
         Plan_date=PlanDate,
