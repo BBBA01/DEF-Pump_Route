@@ -20,7 +20,7 @@ def ExtractingFromDeliveryPlan(DeliveryPlanId,cnxn,No_of_days_for_delivery):
     d.HubName,
     d.PlannedQuantity,d.CurrentQuantity,d.AvailableQuantity,d.ProductId,d.DeliveryLimit,
                          d.PlanDate,d.ExpectedDeliveryDate,d.DeliveryPlanStatusId,d.CreatedBy,d.UpdatedBy,d.CreatedOn,d.UpdatedOn,
-                         d.DeliveryPlanDetailsId,d.SequenceNo,d.AdminId,d.ReceivedQuantity,d.ApproveStatus
+                         d.DeliveryPlanDetailsId,d.SequenceNo,d.AdminId,d.ReceivedQuantity,d.ApproveStatus,d.ApprovedQuantity
 FROM
     Office df
 
@@ -29,7 +29,7 @@ FROM
     dp.StartPointId,dp.ContainerSize,M.Latitude As StartLatitude,
     M.Longitude As StartLongitude,M.HubName,dp.ProductId,dp.DeliveryLimit,
                          dp.PlanDate,dp.ExpectedDeliveryDate,dp.DeliveryPlanStatusId,dp.CreatedBy,dp.UpdatedBy,dp.CreatedOn,dp.UpdatedOn,
-                         dpd.DeliveryPlanDetailsId,dpd.AdminId,dpd.SequenceNo,dpd.ReceivedQuantity
+                         dpd.DeliveryPlanDetailsId,dpd.AdminId,dpd.SequenceNo,dpd.ReceivedQuantity,dpd.ApprovedQuantity
 
     from DeliveryPlanDetails dpd
 

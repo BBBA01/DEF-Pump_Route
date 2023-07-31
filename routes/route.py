@@ -83,7 +83,7 @@ def create_post():
         Starting_Point_longitude,
     )
         if (len(df)>0):
-            df=pd.merge(pd.DataFrame(optimal_route1[0]),df[["officeId","AdminId","DeliveryPlanId","DeliveryPlanDetailsId","SequenceNo","ReceivedQuantity","DeliveryPlanStatusId","ApproveStatus"]],on="officeId",how="left")
+            df=pd.merge(pd.DataFrame(optimal_route1[0]),df[["officeId","AdminId","DeliveryPlanId","DeliveryPlanDetailsId","SequenceNo","ReceivedQuantity","ApprovedQuantity","DeliveryPlanStatusId","ApproveStatus"]],on="officeId",how="left")
             df = df.replace({np.nan: None})
             
 
