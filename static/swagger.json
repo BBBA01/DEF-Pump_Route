@@ -95,7 +95,60 @@
               "required": true,
               "schema": {
                 "type":"string",
-                "example":"06D5DDA0-6834-4EA1-183D-08DAF95AD4EF1"
+                "example":"06D5DDA0-6834-4EA1-183D-08DAF95AD4EF"
+              }
+            },
+            {
+              "name": "IsAdmin",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"number",
+                 "example":6
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+             
+            }
+          }
+        }
+     },
+      "/api/v1/dashboard/total_sales/{FromDate}/{ToDate}/{OfficeId}/{IsAdmin}": {
+        
+        "get": {
+          "tags": [
+            "Dashboard"
+          ],
+          "summary": "Get Total Sales By Business Entity",
+          "parameters": [
+            {
+              "name": "FromDate",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"2023-07-01"
+              }
+            },
+            {
+              "name": "ToDate",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"2023-07-30"
+              }
+            },
+            {
+              "name": "OfficeId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type":"string",
+                "example":"D5355D33-02CF-40B0-5246-08DA286D7F4A"
               }
             },
             {
@@ -148,7 +201,7 @@
               "required": true,
               "schema": {
                 "type":"string",
-                "example":"06D5DDA0-6834-4EA1-183D-08DAF95AD4EF1"
+                "example":"06D5DDA0-6834-4EA1-183D-08DAF95AD4EF"
               }
             },
             {
