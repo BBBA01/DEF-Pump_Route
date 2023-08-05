@@ -50,6 +50,7 @@ SELECT
     ct.MasterOfficeName As masterOfficeName,
     ct.OfficeId As officeId,
     ct.OfficeName As officeName,
+    ot.color As officeTypeColor,
     ct.level,
     ot.OfficeTypeName As officeType,
 	S.InvoiceDate As incomeDate,
@@ -93,20 +94,22 @@ def total_sales_body(df):
     for office in (df[df["level"]==1]["officeId"].unique()):
             if(len(df[df["masterOfficeId"].str.lower()==office.lower()])):
                 totalIncome=df[df["masterOfficeId"].str.lower()==office.lower()]["totalIncome"].sum()
-                if totalIncome>0:
-                    alldata.append({
-                        "officeId":office,
-                        "officeName":df[df["masterOfficeId"].str.lower()==office.lower()]["masterOfficeName"].unique()[0],
-                        "totalIncome":totalIncome
-                    })
+                alldata.append({
+                    "officeId":office,
+                    "officeName":df[df["masterOfficeId"].str.lower()==office.lower()]["masterOfficeName"].unique()[0],
+                    "officeTypeColor":df[df["masterOfficeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                    "officeType":df[df["masterOfficeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                    "totalIncome":totalIncome
+                })
             else:
                 totalIncome=df[df["officeId"].str.lower()==office.lower()]["totalIncome"].sum()
-                if totalIncome>0:
-                    alldata.append({
-                        "officeId":office,
-                        "officeName":df[df["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
-                        "totalIncome":totalIncome
-                    })
+                alldata.append({
+                    "officeId":office,
+                    "officeName":df[df["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
+                    "officeTypeColor":df[df["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                    "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                    "totalIncome":totalIncome
+                })
     return alldata
 
 
@@ -125,6 +128,7 @@ def total_sales(office_id,is_admin,from_date,to_date,cnxn):
         alldata=total_sales_body(df)
     elif is_admin==1:
         df=godown_list(office_id,from_date,to_date,1,cnxn)
+        df=df[(df["officeType"]=="Wholesale Pumps")| (df["officeType"]=="Retail Pumps")]
         alldata=total_sales_body(df)
     elif is_admin==3:
         df=godown_list(office_id,from_date,to_date,1,cnxn)
@@ -139,12 +143,13 @@ def total_sales(office_id,is_admin,from_date,to_date,cnxn):
         df=df[df["officeId"].str.lower()==office_id.lower()]
         for office in (df[df["level"]==0]["officeId"].unique()):
             totalIncome=df[df["officeId"].str.lower()==office.lower()]["totalIncome"].sum()
-            if totalIncome>0:
-                alldata.append({
-                    "officeId":office,
-                    "officeName":df[df["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
-                    "totalIncome":totalIncome
-                })
+            alldata.append({
+                "officeId":office,
+                "officeName":df[df["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
+                "officeTypeColor":df[df["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                "totalIncome":totalIncome
+            })
 
 
     return alldata
