@@ -97,8 +97,8 @@ def total_sales_body(df):
                 alldata.append({
                     "officeId":office,
                     "officeName":df[df["masterOfficeId"].str.lower()==office.lower()]["masterOfficeName"].unique()[0],
-                    "officeTypeColor":df[df["masterOfficeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
-                    "officeType":df[df["masterOfficeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                    "officeTypeColor":df[df["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                    "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
                     "totalIncome":totalIncome
                 })
             else:
