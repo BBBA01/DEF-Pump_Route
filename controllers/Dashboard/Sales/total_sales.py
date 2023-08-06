@@ -110,7 +110,9 @@ def total_sales_body(df):
                     "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
                     "totalIncome":totalIncome
                 })
-    return alldata
+    final_df=pd.DataFrame(alldata)
+    final_df=(final_df.sort_values(by=["officeType"],ascending=True)).reset_index(drop=True)
+    return final_df.to_dict('records')
 
 
 def total_sales(office_id,is_admin,from_date,to_date,cnxn):
