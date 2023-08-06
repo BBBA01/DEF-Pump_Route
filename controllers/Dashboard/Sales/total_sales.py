@@ -111,7 +111,7 @@ def total_sales_body(df):
                     "totalIncome":totalIncome
                 })
     final_df=pd.DataFrame(alldata)
-    final_df=(final_df.sort_values(by=["officeType"],ascending=False)).reset_index(drop=True)
+    final_df=(final_df.sort_values(by=["officeType","officeName"],ascending=[False,False],key=lambda x:x.str.lower())).reset_index(drop=True)
     return final_df.to_dict('records')
 
 
