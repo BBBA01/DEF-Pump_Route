@@ -1,9 +1,9 @@
-from flask import jsonify, request
+from flask import jsonify, request,send_file
 import pandas as pd
 import numpy as np
 import pyodbc
 import warnings
-
+import os
 warnings.filterwarnings("ignore")
 from config.config import ConnectionString
 
@@ -253,3 +253,10 @@ def Userdetails(_UserId):
     json = UserDetails(user_id,cnxn)
     cnxn.close()
     return jsonify(json)
+
+@route_page.route('/api/uploader', methods = ['POST'])
+def upload_file():
+   if request.method == 'POST':
+      f = request.files['file']
+      f.save(f"{os.getcwd()}/api/static/{f.filename}")
+      return {"url":f.filename}
