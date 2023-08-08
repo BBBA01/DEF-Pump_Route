@@ -47,9 +47,12 @@ def godown_list(office_id,from_date,to_date,level,cnxn):
 
 SELECT
     ct.MasterOfficeId As masterOfficeId,
+    ct.MasterOfficeName As masterOfficeName,
     ct.OfficeId As officeId,
     ct.OfficeName As officeName,
     ot.OfficeTypeName As officeType,
+    ot.color As officeTypeColor,
+    ct.level,
 	S.InvoiceDate As incomeDate,
 	S.totalIncome,
 	S.Quantity,
@@ -154,38 +157,74 @@ WHERE
     ''',cnxn)
     return df1,df2
 
+def total_sales_based_on_office_body(df):
+    alldata=[]
+    for office in (df[df["level"]==1]["officeId"].unique()):
+            if(len(df[df["masterOfficeId"].str.lower()==office.lower()])):
+                totalIncome=df[df["masterOfficeId"].str.lower()==office.lower()]["totalIncome"].sum()
+                alldata.append({
+                    "officeId":office,
+                    "officeName":df[df["masterOfficeId"].str.lower()==office.lower()]["masterOfficeName"].unique()[0],
+                    "officeTypeColor":df[df["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                    "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                    "totalIncome":totalIncome
+                })
+            else:
+                totalIncome=df[df["officeId"].str.lower()==office.lower()]["totalIncome"].sum()
+                alldata.append({
+                    "officeId":office,
+                    "officeName":df[df["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
+                    "officeTypeColor":df[df["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                    "officeType":df[df["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                    "totalIncome":totalIncome
+                })
+    final_df=pd.DataFrame(alldata)
+    try:
+        final_df=(final_df.sort_values(by=["officeType","officeName"],ascending=[False,False],key=lambda x:x.str.lower())).reset_index(drop=True)
+    except:
+        print("No Data Found")
+
+    return final_df.to_dict('records')
+
+def sales_based_on_admin_body(date_range,df1,df2):
+    alldata=[]
+    productdata=[]
+    for i in date_range:
+        income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
+        expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
+        
+        Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
+        Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
+        Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
+        Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
+        Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
+        Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
+                
+        alldata.append({
+            "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
+            "totalIncome": income,
+            "totalExpense": expense,
+            "lstOffice":Merged_list.to_dict(orient="records")
+        })
+        productdata.append({
+            "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
+            "lstproduct": Product_list.to_dict(orient="records")
+            
+        })
+    return alldata,productdata
+
 def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
     
     
-    alldata=[]
-    productdata=[]
+    sales_based_on_date=[]
+    sales_based_on_product=[]
+    sales_based_on_office=[]
 
     if is_admin==6:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-           
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1)
 
 
     elif is_admin==4:
@@ -193,142 +232,39 @@ def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
         df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
         df1=df1[~((df1["officeType"]!="Company")& (df1["masterOfficeId"].str.lower()==office_id.lower()))]
         df2=df2[~((df2["officeType"]!="Company")& (df2["masterOfficeId"].str.lower()==office_id.lower()))]
-    
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-           
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1)
+
     elif is_admin==5:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-           
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1)
+
     elif is_admin==1:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
         # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
-        
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-        
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1[(df1["officeType"]=="Wholesale Pumps")| (df1["officeType"]=="Retail Pumps")])
+
     elif is_admin==3:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
         # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
         df1=df1[df1["officeType"]=="Wholesale Pumps"]
         df2=df2[df2["officeType"]=="Wholesale Pumps"]
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-        
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1)
+
     elif is_admin==2:
         date_range=pd.date_range(from_date,to_date)
         df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
         # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
         df1=df1[df1["officeType"]=="Retail Pumps"]
         df2=df2[df2["officeType"]=="Retail Pumps"]
-        for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-        
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
-            alldata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "totalIncome": income,
-                "totalExpense": expense,
-                "lstOffice":Merged_list.to_dict(orient="records")
-            })
-            productdata.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
-            })
+        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
+        sales_based_on_office=total_sales_based_on_office_body(df1)
 
     elif is_admin==0:
         date_range=pd.date_range(from_date,to_date)
@@ -345,18 +281,27 @@ def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
             Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
             
             
-            alldata.append({
+            sales_based_on_date.append({
                 "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
                 "totalIncome": income,
                 "totalExpense": expense,
                 "lstOffice":[]
             })
-            productdata.append({
+            sales_based_on_product.append({
                 "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
                 "lstproduct": Product_list.to_dict(orient="records")
                 
             })
+        for office in (df1[df1["level"]==0]["officeId"].unique()):
+            totalIncome=df1[df1["officeId"].str.lower()==office.lower()]["totalIncome"].sum()
+            sales_based_on_office.append({
+                "officeId":office,
+                "officeName":df1[df1["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
+                "officeTypeColor":df1[df1["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
+                "officeType":df1[df1["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
+                "totalIncome":totalIncome
+            })
     
 
 
-    return alldata,productdata
+    return sales_based_on_date,sales_based_on_product,sales_based_on_office
