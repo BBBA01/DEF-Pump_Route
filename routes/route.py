@@ -1,4 +1,4 @@
-from flask import jsonify, request,send_file
+from flask import jsonify, request
 import pandas as pd
 import numpy as np
 import pyodbc
@@ -258,5 +258,5 @@ def Userdetails(_UserId):
 def upload_file():
    if request.method == 'POST':
       f = request.files['file']
-      f.save(f"{os.getcwd()}/api/static/{f.filename}")
+      f.save(f"{os.getcwd()}/static/downloads/{f.filename}")
       return {"url":f.filename}
