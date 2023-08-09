@@ -192,13 +192,27 @@ def sales_based_on_admin_body(date_range,df1,df2):
     for i in date_range:
         income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
         expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-        
-        Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-        Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-        Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-        Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-        Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-        Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
+        try:
+            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
+        except:
+            Product_list=pd.DataFrame()
+        try:
+            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
+        except:
+            Sales_list=pd.DataFrame()
+        try:
+            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
+        except:
+            Expense_list=pd.DataFrame()
+        try:
+            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
+        except:
+            Merged_list=pd.DataFrame()
+        try:
+            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
+            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
+        except:
+            Product_list=pd.DataFrame()
                 
         alldata.append({
             "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
