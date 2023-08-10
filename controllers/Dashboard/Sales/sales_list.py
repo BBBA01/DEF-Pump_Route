@@ -73,6 +73,7 @@ Left Outer join
 Select SUM(Total) As totalIncome,Sum(Quantity) As Quantity,InvoiceDate,FuelRateId,OfficeId,Rate
 From Sales
 Where
+IsDeleted=0 AND
 InvoiceDate>='{from_date}' AND InvoiceDate<='{to_date}'
 Group By
 InvoiceDate,FuelRateId,OfficeId,Rate
@@ -147,6 +148,7 @@ Left Outer join
 Select officeId,SUM(Amount) As totalExpense,VoucherDate
 From Expense
 Where
+IsDeleted=0 AND
 VoucherDate>='{from_date}' AND VoucherDate<='{to_date}'
 Group By
 officeId, VoucherDate
@@ -162,6 +164,8 @@ def total_sales_based_on_office_body(df):
     for office in (df[df["level"]==1]["officeId"].unique()):
             if(len(df[df["masterOfficeId"].str.lower()==office.lower()])):
                 totalIncome=df[df["masterOfficeId"].str.lower()==office.lower()]["totalIncome"].sum()
+                for innerOffice in df[df["masterOfficeId"].str.lower()==office.lower()]["officeId"].unique():
+                    totalIncome+=df[df["masterOfficeId"].str.lower()==innerOffice.lower()]["totalIncome"].sum()
                 alldata.append({
                     "officeId":office,
                     "officeName":df[df["masterOfficeId"].str.lower()==office.lower()]["masterOfficeName"].unique()[0],
