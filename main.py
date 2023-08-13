@@ -22,4 +22,4 @@ app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
 
 app.register_blueprint(route_page)
 # app.run(debug=False,port=5060,host="115.124.120.251")
-app.run(debug=False)
+app.run(debug=True)

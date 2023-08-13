@@ -1,6 +1,16 @@
 import pandas as pd
+from functools import cache 
+import time
+import pyodbc
+import sys
+sys.path.append('C:/Users/skyha/Desktop/DEF-Pump_Route')
+from config.config import ConnectionString
+from collections import defaultdict
+
+
 
 def godown_list(office_id,from_date,to_date,level,cnxn):
+    # start_time = time.time()  # Record the start time
     df1=pd.read_sql_query(f'''
   WITH cte_org AS (
     SELECT
@@ -9,16 +19,8 @@ def godown_list(office_id,from_date,to_date,level,cnxn):
         ofs.OfficeTypeId,
         ofs.OfficeName,
         mo.OfficeName AS MasterOfficeName,
-        0 AS Level,
-        ofs.OfficeAddress,
-        ofs.RegisteredAddress,
-        ofs.OfficeContactNo,
-        ofs.OfficeEmail,
-        ofs.GSTNumber,
-        ofs.IsActive,
-        ofs.Latitude,
-        ofs.Longitude,
-        ofs.GstTypeId
+        0 AS Level
+    
     FROM Office ofs
     LEFT JOIN Office mo ON mo.OfficeId = ofs.MasterOfficeId
     WHERE ofs.OfficeId = '{office_id}'
@@ -31,16 +33,8 @@ def godown_list(office_id,from_date,to_date,level,cnxn):
         e.OfficeTypeId,
         e.OfficeName,
         o.OfficeName AS MasterOfficeName,
-        Level + 1 AS Level,
-        e.OfficeAddress,
-        e.RegisteredAddress,
-        e.OfficeContactNo,
-        e.OfficeEmail,
-        e.GSTNumber,
-        e.IsActive,
-        e.Latitude,
-        e.Longitude,
-        e.GstTypeId
+        Level + 1 AS Level
+        
     FROM Office e
     INNER JOIN cte_org o ON o.OfficeId = e.MasterOfficeId
 )
@@ -96,16 +90,7 @@ WHERE
         ofs.OfficeTypeId,
         ofs.OfficeName,
         mo.OfficeName AS MasterOfficeName,
-        0 AS Level,
-        ofs.OfficeAddress,
-        ofs.RegisteredAddress,
-        ofs.OfficeContactNo,
-        ofs.OfficeEmail,
-        ofs.GSTNumber,
-        ofs.IsActive,
-        ofs.Latitude,
-        ofs.Longitude,
-        ofs.GstTypeId
+        0 AS Level
     FROM Office ofs
     LEFT JOIN Office mo ON mo.OfficeId = ofs.MasterOfficeId
     WHERE ofs.OfficeId = '{office_id}'
@@ -118,16 +103,7 @@ WHERE
         e.OfficeTypeId,
         e.OfficeName,
         o.OfficeName AS MasterOfficeName,
-        Level + 1 AS Level,
-        e.OfficeAddress,
-        e.RegisteredAddress,
-        e.OfficeContactNo,
-        e.OfficeEmail,
-        e.GSTNumber,
-        e.IsActive,
-        e.Latitude,
-        e.Longitude,
-        e.GstTypeId
+        Level + 1 AS Level      
     FROM Office e
     INNER JOIN cte_org o ON o.OfficeId = e.MasterOfficeId
 )
@@ -157,9 +133,15 @@ officeId, VoucherDate
 WHERE
     ({level} < 0 OR ct.Level <= {level})
     ''',cnxn)
+    # end_time = time.time()  # Record the end time
+    # execution_time = end_time - start_time  # Calculate the execution time in seconds
+    # print(f"godown_list execution time: {execution_time:.4f} seconds")  # Print the execution time with 4 decimal places
+
     return df1,df2
 
+
 def total_sales_based_on_office_body(df):
+    # start_time = time.time()
     alldata=[]
     for office in (df[df["level"]==1]["officeId"].unique()):
             if(len(df[df["masterOfficeId"].str.lower()==office.lower()])):
@@ -187,139 +169,127 @@ def total_sales_based_on_office_body(df):
         final_df=(final_df.sort_values(by=["officeType","officeName"],ascending=[False,False],key=lambda x:x.str.lower())).reset_index(drop=True)
     except:
         print("No Data Found")
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # print(f"total_sales_based_on_office_body execution time: {execution_time:.4f} seconds")
 
     return final_df.to_dict('records')
 
-def sales_based_on_admin_body(date_range,df1,df2):
-    alldata=[]
-    productdata=[]
+def sales_based_on_admin_body(date_range, df1, df2):
+    # start_time = time.time()
+
+    df1["incomeDate"] = pd.to_datetime(df1["incomeDate"])
+    df2["expenseDate"] = pd.to_datetime(df2["expenseDate"])
+
+    df1_grouped = df1.groupby(["incomeDate", "productId", "productName", "unitName", "unitShortName", "singularShortName", "rate", "color"]).agg({"totalIncome": "sum", "Quantity": "sum"}).reset_index()
+    df1_grouped.rename({"totalIncome": "totalSales", "Quantity": "qty"}, axis=1, inplace=True)
+
+    sales_grouped = df1.groupby(["incomeDate", "officeId", "officeName", "officeType"]).agg({"totalIncome": "sum"}).reset_index()
+    sales_grouped.rename({"totalIncome": "totalSales"}, axis=1, inplace=True)
+
+    expense_grouped = df2.groupby(["expenseDate", "officeId", "officeName", "officeType"]).agg({"totalExpense": "sum"}).reset_index()
+
+    merged_list = pd.merge(sales_grouped, expense_grouped, on=["officeId", "officeName", "officeType"], how="outer").fillna(0)
+
+    alldata = []
+    productdata = []
+
     for i in date_range:
-        income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-        expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-        try:
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
-        except:
-            Product_list=pd.DataFrame()
-        try:
-            Sales_list=df1[(df1["incomeDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalIncome":"sum"}).reset_index()[["officeId","officeName","officeType","totalIncome"]]
-        except:
-            Sales_list=pd.DataFrame()
-        try:
-            Expense_list=df2[(df2["expenseDate"]==i)].groupby(["officeId","officeName","officeType"]).agg({"totalExpense":"sum"}).reset_index()[["officeId","officeName","officeType","totalExpense"]]
-        except:
-            Expense_list=pd.DataFrame()
-        try:
-            Merged_list=pd.merge(Sales_list,Expense_list,on=["officeId","officeName","officeType"],how="outer").fillna(0)
-        except:
-            Merged_list=pd.DataFrame()
-        try:
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-        except:
-            Product_list=pd.DataFrame()
-                
+        requested_date = pd.to_datetime(i).strftime("%Y-%m-%d")
+
+        filtered_sales = df1_grouped[df1_grouped["incomeDate"] == i]
+        filtered_products = df1_grouped[df1_grouped["incomeDate"] == i]
+
+        income = filtered_sales["totalSales"].sum()
+        expense = expense_grouped[expense_grouped["expenseDate"] == i]["totalExpense"].sum()
+
+        lst_office = merged_list[merged_list["incomeDate"] == i].to_dict(orient="records")
+        lst_product = filtered_products.to_dict(orient="records")
+
         alldata.append({
-            "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
+            "requestedDate": requested_date,
             "totalIncome": income,
             "totalExpense": expense,
-            "lstOffice":Merged_list.to_dict(orient="records")
+            "lstOffice": lst_office
         })
+
         productdata.append({
-            "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-            "lstproduct": Product_list.to_dict(orient="records")
-            
+            "requestedDate": requested_date,
+            "lstproduct": lst_product
         })
-    return alldata,productdata
 
-def sales_based_on_admin(office_id,is_admin,from_date,to_date,cnxn):
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # print(f"sales_based_on_admin_body execution time: {execution_time:.4f} seconds")
+
+    return alldata, productdata
+
+# df1, df2= godown_list('46A1C7B7-6885-4F74-7ADE-08DAFE23C727', '2023-01-01', '2023-07-10', -1, cnxn = pyodbc.connect(ConnectionString))
+# print(sales_based_on_admin_body(date_range=pd.date_range('2023-01-01', '2023-07-01'), df1=df1, df2=df2))
+
+def sales_based_on_admin(office_id, is_admin, from_date, to_date, cnxn):
+    # start_time = time.time()
     
+    # Fetch the initial data
+    df1, df2 = godown_list(office_id, from_date, to_date, -1, cnxn)
     
-    sales_based_on_date=[]
-    sales_based_on_product=[]
-    sales_based_on_office=[]
+    date_range = pd.date_range(from_date, to_date)
+    sales_based_on_date = []
+    sales_based_on_product = []
+    sales_based_on_office = []
 
-    if is_admin==6:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1)
+    if is_admin in [0, 1, 2, 3, 4, 5, 6]:
+        if is_admin in [4, 5, 6]:
+            sales_agg = df1.groupby(["incomeDate"]).agg({"totalIncome": "sum"}).reset_index()
+            expenses_agg = df2.groupby(["expenseDate"]).agg({"totalExpense": "sum"}).reset_index()
 
+        if is_admin in [0, 1, 2, 3]:
+            df1_office_specific = df1[df1["officeId"].str.lower() == office_id.lower()]
+            df2_office_specific = df2[df2["officeId"].str.lower() == office_id.lower()]
+            sales_agg = df1_office_specific.groupby(["incomeDate"]).agg({"totalIncome": "sum"}).reset_index()
+            expenses_agg = df2_office_specific.groupby(["expenseDate"]).agg({"totalExpense": "sum"}).reset_index()
 
-    elif is_admin==4:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
-        df1=df1[~((df1["officeType"]!="Company")& (df1["masterOfficeId"].str.lower()==office_id.lower()))]
-        df2=df2[~((df2["officeType"]!="Company")& (df2["masterOfficeId"].str.lower()==office_id.lower()))]
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1)
-
-    elif is_admin==5:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,-1,cnxn)
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1)
-
-    elif is_admin==1:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1[(df1["officeType"]=="Wholesale Pumps")| (df1["officeType"]=="Retail Pumps")])
-
-    elif is_admin==3:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
-        df1=df1[df1["officeType"]=="Wholesale Pumps"]
-        df2=df2[df2["officeType"]=="Wholesale Pumps"]
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1)
-
-    elif is_admin==2:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        # if(df1[df1["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company" or df2[df2["officeId"].str.lower()==office_id.lower()]["officeType"].values[0]=="Company"):
-        df1=df1[df1["officeType"]=="Retail Pumps"]
-        df2=df2[df2["officeType"]=="Retail Pumps"]
-        sales_based_on_date,sales_based_on_product=sales_based_on_admin_body(date_range,df1,df2)
-        sales_based_on_office=total_sales_based_on_office_body(df1)
-
-    elif is_admin==0:
-        date_range=pd.date_range(from_date,to_date)
-        df1,df2=godown_list(office_id,from_date,to_date,1,cnxn)
-        df1=df1[df1["officeId"].str.lower()==office_id.lower()]
-        df2=df2[df2["officeId"].str.lower()==office_id.lower()]
+        # Pre-aggregate product data
+        product_agg = df1.groupby(["productId", "productName", "unitName", "unitShortName", "singularShortName", "rate", "color", "incomeDate"]).agg({"totalIncome": "sum", "Quantity": "sum"}).reset_index()
+        
         for i in date_range:
-            income=df1[df1["incomeDate"]==i]["totalIncome"].sum()
-            expense=df2[df2["expenseDate"]==i]["totalExpense"].sum()
-           
-            Product_list=df1[(df1["incomeDate"]==i)].groupby(["productId","productName","unitName","unitShortName","singularShortName","rate","color"]).agg({"totalIncome":"sum","Quantity":"sum"}).reset_index()[["productId","productName","unitName","unitShortName","singularShortName","totalIncome","Quantity","rate","color"]]
+            requested_date = pd.to_datetime(i).strftime("%Y-%m-%d")
             
-            Product_list.rename({"totalIncome":"totalSales","Quantity":"qty"},axis=1,inplace=True)
-            Product_list=Product_list.astype({"totalSales":int,"qty":int,"productId":int})
-            
-            
+            income = sales_agg[sales_agg["incomeDate"] == i]["totalIncome"].sum()
+            expense = expenses_agg[expenses_agg["expenseDate"] == i]["totalExpense"].sum()
+
+            product_list = product_agg[product_agg["incomeDate"] == i][["productId", "productName", "unitName", "unitShortName", "singularShortName", "totalIncome", "Quantity", "rate", "color"]]
+            product_list.rename({"totalIncome": "totalSales", "Quantity": "qty"}, axis=1, inplace=True)
+            product_list = product_list.astype({"totalSales": int, "qty": int, "productId": int})
+
             sales_based_on_date.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
+                "requestedDate": requested_date,
                 "totalIncome": income,
                 "totalExpense": expense,
-                "lstOffice":[]
+                "lstOffice": []
             })
             sales_based_on_product.append({
-                "requestedDate": pd.to_datetime(i).strftime("%Y-%m-%d"),
-                "lstproduct": Product_list.to_dict(orient="records")
-                
+                "requestedDate": requested_date,
+                "lstproduct": product_list.to_dict(orient="records")
             })
-        for office in (df1[df1["level"]==0]["officeId"].unique()):
-            totalIncome=df1[df1["officeId"].str.lower()==office.lower()]["totalIncome"].sum()
-            sales_based_on_office.append({
-                "officeId":office,
-                "officeName":df1[df1["officeId"].str.lower()==office.lower()]["officeName"].unique()[0],
-                "officeTypeColor":df1[df1["officeId"].str.lower()==office.lower()]["officeTypeColor"].unique()[0],
-                "officeType":df1[df1["officeId"].str.lower()==office.lower()]["officeType"].unique()[0],
-                "totalIncome":totalIncome
-            })
-    
+
+        if is_admin in [0, 1, 2, 3]:
+            total_sales_office = df1_office_specific[df1_office_specific["level"] == 0].groupby("officeId").agg({"totalIncome": "sum"}).reset_index()
+            total_sales_office.rename(columns={"totalIncome": "totalIncomeOffice"}, inplace=True)
+            total_sales_office = pd.merge(total_sales_office, df1_office_specific[df1_office_specific["level"] == 0][["officeId", "officeName", "officeTypeColor", "officeType"]], on="officeId", how="left")
+
+            sales_based_on_office = total_sales_office.to_dict(orient="records")
+        
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # print(f"sales_based_on_admin execution time: {execution_time:.4f} seconds") 
+    return sales_based_on_date, sales_based_on_product, sales_based_on_office
+# print(sales_based_on_admin('06D5DDA0-6834-4EA1-183D-08DAF95AD4EF', 6 , '2023-01-01', '2023-07-01', cnxn = pyodbc.connect(ConnectionString)))
 
 
-    return sales_based_on_date,sales_based_on_product,sales_based_on_office
+
+
+
+
+
+
